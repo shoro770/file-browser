@@ -39,6 +39,21 @@ export interface FileItem {
   children?: FileItem[]
 }
 
+/** Props for the `FileRow` component. */
+export interface FileRowProps {
+  item: FileItem
+  /** Whether this row is the active selection. */
+  selected?: boolean
+  /**
+   * Roving-tabindex value: `0` makes the row a tab stop, `-1` removes it from
+   * the tab order (a parent listbox then moves focus with arrow keys).
+   * Defaults to `0` for standalone use.
+   */
+  tabIndex?: 0 | -1
+  /** Called on click, Enter or Space. */
+  onSelect?: (item: FileItem) => void
+}
+
 /** Field a file listing can be sorted by. */
 export type SortField = 'name' | 'size' | 'updatedAt'
 

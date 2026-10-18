@@ -43,3 +43,36 @@ export function formatSize(bytes: number): string {
 
   return `${sign}${value.toFixed(1)} ${UNITS[unit]}`
 }
+
+/**
+ * Shortens a path longer than `maxLength` by replacing middle segments with `"..."`,
+ * always keeping the first and last segments intact (so the result may still exceed `maxLength`).
+ *
+ * @param fullPath - `/`-separated path to shorten.
+ * @param maxLength - Target maximum length in characters. Defaults to 40.
+ * @returns The path unchanged if it fits or has no middle segments, otherwise e.g. `"/Users/.../src/lib/format.ts"`.
+ */
+export function formatPath(fullPath: string, maxLength = 40): string {
+  if (fullPath.length <= maxLength) {
+    return fullPath
+  }
+
+  // Keep a leading "/" outside the segments so the first kept segment is a real name, not "".
+  const root = fullPath.startsWith('/') ? '/' : ''
+  const segments = fullPath.slice(root.length).split('/')
+  if (segments.length < 3) {
+    return fullPath
+  }
+
+  const head = `${root}${segments[0]}/.../`
+  const tail = [segments[segments.length - 1]]
+  // Add trailing segments back, nearest the file first, while the result still fits.
+  for (let i = segments.length - 2; i > 0; i--) {
+    if (head.length + segments[i].length + 1 + tail.join('/').length > maxLength) {
+      break
+    }
+    tail.unshift(segments[i])
+  }
+
+  return head + tail.join('/')
+}

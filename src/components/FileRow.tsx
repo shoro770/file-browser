@@ -1,6 +1,6 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, KeyboardEvent } from 'react'
 import { formatSize } from '../lib/format'
-import type { FileCategory, FileItem } from '../types'
+import type { FileCategory, FileRowProps } from '../types'
 
 /** Short badge text per category; `Record` makes TypeScript flag any missing category. */
 const CATEGORY_LABELS: Record<FileCategory, string> = {
@@ -45,25 +45,52 @@ const dateStyle: CSSProperties = {
   fontSize: '14px',
 }
 
-interface FileRowProps {
-  item: FileItem
+/** Hides text visually while keeping it available to screen readers. */
+const visuallyHiddenStyle: CSSProperties = {
+  position: 'absolute',
+  width: '1px',
+  height: '1px',
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
 }
 
 /**
  * One row of a file listing: category badge, name, last-modified date and size.
- * Renders an `<li>`, so place it inside a `<ul>` or `<ol>`.
+ * Renders a focusable `<li role="option">`, so place it inside an element with
+ * `role="listbox"` (e.g. `<ul role="listbox" aria-label="Files">`).
  */
-export function FileRow({ item }: FileRowProps) {
+export function FileRow({
+  item,
+  selected = false,
+  tabIndex = 0,
+  onSelect,
+}: FileRowProps) {
   const label = item.isDirectory ? 'DIR' : CATEGORY_LABELS[item.category]
   const kind = item.isDirectory ? 'directory' : item.category
 
+  function handleKeyDown(event: KeyboardEvent<HTMLLIElement>) {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+    // Stop Space from scrolling the page.
+    event.preventDefault()
+    onSelect?.(item)
+  }
+
   return (
-    <li className="file-row">
+    <li
+      className={selected ? 'file-row is-selected' : 'file-row'}
+      role="option"
+      aria-selected={selected}
+      tabIndex={tabIndex}
+      onClick={() => onSelect?.(item)}
+      onKeyDown={handleKeyDown}
+    >
       <span style={mainStyle}>
-        <span style={badgeStyle} title={kind} aria-label={kind}>
+        <span style={badgeStyle} title={kind} aria-hidden="true">
           {label}
         </span>
         <span>
+          <span style={visuallyHiddenStyle}>{kind}: </span>
           <span className="file-name">
             {item.isDirectory ? `${item.name}/` : item.name}
           </span>
