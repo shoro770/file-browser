@@ -1,121 +1,106 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { FileRow } from './components/FileRow'
+import type { FileItem } from './types'
 import './App.css'
 
+/**
+ * Sample data until the app reads a real directory. Covers every category.
+ * Dates use the local-time constructor (month is 0-based) so they don't shift a
+ * day for viewers west of UTC, as `new Date('2026-10-12')` would.
+ */
+const MOCK_FILES: FileItem[] = [
+  {
+    id: '1',
+    name: 'documents',
+    path: '/documents',
+    size: 0,
+    isDirectory: true,
+    updatedAt: new Date(2026, 9, 12),
+    category: 'other',
+  },
+  {
+    id: '2',
+    name: 'report.pdf',
+    path: '/report.pdf',
+    size: 1048576,
+    isDirectory: false,
+    updatedAt: new Date(2026, 9, 15),
+    category: 'document',
+  },
+  {
+    id: '3',
+    name: 'vacation.jpg',
+    path: '/vacation.jpg',
+    size: 3460300,
+    isDirectory: false,
+    updatedAt: new Date(2026, 8, 2),
+    category: 'image',
+  },
+  {
+    id: '4',
+    name: 'demo-recording.mp4',
+    path: '/demo-recording.mp4',
+    size: 734003200,
+    isDirectory: false,
+    updatedAt: new Date(2026, 9, 3),
+    category: 'video',
+  },
+  {
+    id: '5',
+    name: 'podcast-episode-12.mp3',
+    path: '/podcast-episode-12.mp3',
+    size: 48234496,
+    isDirectory: false,
+    updatedAt: new Date(2026, 6, 30),
+    category: 'audio',
+  },
+  {
+    id: '6',
+    name: 'backup.zip',
+    path: '/backup.zip',
+    size: 15032385536,
+    isDirectory: false,
+    updatedAt: new Date(2026, 7, 21),
+    category: 'archive',
+  },
+  {
+    id: '7',
+    name: 'App.tsx',
+    path: '/App.tsx',
+    size: 12400,
+    isDirectory: false,
+    updatedAt: new Date(2026, 9, 18),
+    category: 'code',
+  },
+  {
+    id: '8',
+    name: 'notes.txt',
+    path: '/notes.txt',
+    size: 842,
+    isDirectory: false,
+    updatedAt: new Date(2026, 9, 17),
+    category: 'document',
+  },
+  {
+    id: '9',
+    name: 'LICENSE',
+    path: '/LICENSE',
+    size: 1071,
+    isDirectory: false,
+    updatedAt: new Date(2026, 0, 5),
+    category: 'other',
+  },
+]
+
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <main className="file-browser">
+      <h1>File Browser</h1>
+      <ul className="file-list">
+        {MOCK_FILES.map((file) => (
+          <FileRow key={file.id} item={file} />
+        ))}
+      </ul>
+    </main>
   )
 }
 
