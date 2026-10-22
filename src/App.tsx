@@ -1,4 +1,8 @@
+import { useEffect, useRef, useState } from 'react'
 import { FileRow } from './components/FileRow'
+import { PdfPreview } from './components/PdfPreview'
+import { isPdf } from './lib/pdf'
+import { isFolderPickerSupported, pickFolder, revokeItemUrls } from './services/directory'
 import type { FileItem } from './types'
 import './App.css'
 
@@ -21,6 +25,7 @@ const MOCK_FILES: FileItem[] = [
     id: '2',
     name: 'report.pdf',
     path: '/report.pdf',
+    url: '/sample.pdf',
     size: 1048576,
     isDirectory: false,
     updatedAt: new Date(2026, 9, 15),
@@ -92,14 +97,62 @@ const MOCK_FILES: FileItem[] = [
 ]
 
 function App() {
+  const [files, setFiles] = useState<FileItem[]>(MOCK_FILES)
+  const [folderName, setFolderName] = useState<string | null>(null)
+  const [selected, setSelected] = useState<FileItem | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  // The items whose blob URLs are live, so they can be released on change/unmount.
+  const openedItems = useRef<FileItem[]>([])
+  const pickerSupported = isFolderPickerSupported()
+
+  useEffect(() => () => revokeItemUrls(openedItems.current), [])
+
+  async function handleOpenFolder() {
+    setError(null)
+    try {
+      const folder = await pickFolder()
+      if (!folder) return
+      revokeItemUrls(openedItems.current)
+      openedItems.current = folder.items
+      setFiles(folder.items)
+      setFolderName(folder.name)
+      setSelected(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open the folder')
+    }
+  }
+
   return (
     <main className="file-browser">
       <h1>File Browser</h1>
-      <ul className="file-list">
-        {MOCK_FILES.map((file) => (
-          <FileRow key={file.id} item={file} />
+      <div className="toolbar">
+        <button type="button" onClick={handleOpenFolder} disabled={!pickerSupported}>
+          Open folder
+        </button>
+        <span className="toolbar-path">{folderName ? `${folderName}/` : 'Sample files'}</span>
+      </div>
+      {!pickerSupported && (
+        <p className="notice" role="status">
+          Opening a folder needs a Chromium browser such as Chrome or Edge.
+        </p>
+      )}
+      {error && (
+        <p className="notice" role="alert">
+          {error}
+        </p>
+      )}
+      <ul className="file-list" role="listbox" aria-label="Files">
+        {files.map((file) => (
+          <FileRow
+            key={file.id}
+            item={file}
+            selected={file.id === selected?.id}
+            onSelect={setSelected}
+          />
         ))}
       </ul>
+      {files.length === 0 && <p className="notice">This folder is empty.</p>}
+      {selected && isPdf(selected) && <PdfPreview item={selected} />}
     </main>
   )
 }

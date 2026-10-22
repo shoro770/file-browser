@@ -31,10 +31,12 @@ export interface FileItem {
   size: number
   /** `true` for directories, `false` for regular files. */
   isDirectory: boolean
-  /** Last modification time. */
-  updatedAt: Date
+  /** Last modification time; `null` when unknown (e.g. directories read from disk). */
+  updatedAt: Date | null
   /** Content category. */
   category: FileCategory
+  /** URL the file content can be loaded from (used by previews); omitted if unavailable. */
+  url?: string
   /** Directory contents; omitted for files and for directories not yet loaded. */
   children?: FileItem[]
 }
@@ -52,6 +54,12 @@ export interface FileRowProps {
   tabIndex?: 0 | -1
   /** Called on click, Enter or Space. */
   onSelect?: (item: FileItem) => void
+}
+
+/** Props for the `PdfPreview` component. */
+export interface PdfPreviewProps {
+  /** A PDF file with a `url` to load; without a `url` only the header is shown. */
+  item: FileItem
 }
 
 /** Field a file listing can be sorted by. */

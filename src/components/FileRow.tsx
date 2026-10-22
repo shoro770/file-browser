@@ -94,9 +94,13 @@ export function FileRow({
           <span className="file-name">
             {item.isDirectory ? `${item.name}/` : item.name}
           </span>
-          <time style={dateStyle} dateTime={item.updatedAt.toISOString()}>
-            {dateFormat.format(item.updatedAt)}
-          </time>
+          {item.updatedAt ? (
+            <time style={dateStyle} dateTime={item.updatedAt.toISOString()}>
+              {dateFormat.format(item.updatedAt)}
+            </time>
+          ) : (
+            <span style={dateStyle}>—</span>
+          )}
         </span>
       </span>
       {/* Directory sizes aren't meaningful yet, so show a dash. */}
