@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 /**
  * Core domain types for the file browser.
  */
@@ -51,6 +53,12 @@ export interface TreeSnapshot {
   items: Readonly<Record<string, FileItem>>
   /** Ids of the Workspace Folder's immediate children, in display order. */
   rootIds: readonly string[]
+  /** Ordered child ids of every folder that has been listed, keyed by folder `id`. */
+  childIds: Readonly<Record<string, readonly string[]>>
+  /** Ids of folders currently expanded (or being expanded). */
+  expandedIds: ReadonlySet<string>
+  /** Ids of folders whose first read has run past the loading delay. */
+  loadingIds: ReadonlySet<string>
   /** Id of the selected file; `null` when nothing is selected. */
   selectedId: string | null
 }
@@ -68,8 +76,18 @@ export interface GlyphProps {
 
 /** Props for the `Tree` component. */
 export interface TreeProps {
-  /** Items to show, already in display order. */
-  items: readonly FileItem[]
+  /** Every loaded item, keyed by `id`. */
+  items: Readonly<Record<string, FileItem>>
+  /** Ids of the top-level rows, in display order. */
+  rootIds: readonly string[]
+  /** Ordered child ids of every listed folder. */
+  childIds: Readonly<Record<string, readonly string[]>>
+  /** Ids of expanded folders. */
+  expandedIds: ReadonlySet<string>
+  /** Ids of folders showing a loading state. */
+  loadingIds: ReadonlySet<string>
+  /** Called to expand or collapse a folder. */
+  onToggle: (id: string) => void
   /** Id of the selected item, or `null`. */
   selectedId: string | null
   /** Changing this value moves focus to the first row. */
@@ -90,6 +108,22 @@ export interface TreeNodeProps {
   tabIndex: 0 | -1
   /** Called when the row receives focus. */
   onFocusRow: (id: string) => void
+  /** Folders only: whether the folder is expanded. */
+  expanded: boolean
+  /** Folders only: whether the first read is slow enough to show a spinner. */
+  loading: boolean
+  /** Called to expand or collapse a folder row. */
+  onToggle: (id: string) => void
+  /** Rendered inside the row's `role="group"` (child rows or placeholders). */
+  children?: ReactNode
+}
+
+/** Props for a placeholder row ("Loading...", "Empty folder"). */
+export interface TreePlaceholderProps {
+  /** Visible text. */
+  label: string
+  /** 1-based depth in the tree. */
+  level: number
 }
 
 /** Props for the `OpenFolderPrompt` component. */

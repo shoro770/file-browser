@@ -19,7 +19,7 @@ vi.stubGlobal('window', {
   },
 })
 
-const { openWorkspace, getSnapshot } = await import('./tree')
+const { openWorkspace, getSnapshot, toggle } = await import('./tree')
 
 describe('openWorkspace', () => {
   beforeEach(() => {
@@ -77,5 +77,195 @@ describe('openWorkspace', () => {
     picker.mockResolvedValue(fakeFolder('void', []))
     expect(await openWorkspace()).toEqual({ status: 'opened', name: 'void', count: 0 })
     expect(getSnapshot().rootIds).toEqual([])
+  })
+})
+
+type Spec = { [name: string]: Spec | null }
+
+/** Builds a nested fake folder: object values are folders, `null` values are files. */
+function fakeTree(name: string, spec: Spec, opts: { delay?: () => Promise<void>; fail?: string[] } = {}) {
+  const getFile = vi.fn()
+  const folders: Record<string, ReturnType<typeof make>> = {}
+  function make(folderName: string, children: Spec, path: string) {
+    const values = vi.fn(async function* () {
+      if (opts.delay) await opts.delay()
+      if (opts.fail?.includes(path)) throw new Error('boom')
+      for (const [childName, child] of Object.entries(children)) {
+        yield child ? { name: childName, kind: 'directory' } : { name: childName, kind: 'file', getFile }
+      }
+    })
+    const getDirectoryHandle = vi.fn(async (childName: string) => {
+      if (!children[childName]) throw new Error('missing')
+      return folders[path ? `${path}/${childName}` : childName]
+    })
+    const handle = { name: folderName, kind: 'directory', values, getDirectoryHandle }
+    for (const [childName, child] of Object.entries(children)) {
+      const childPath = path ? `${path}/${childName}` : childName
+      if (child) folders[childPath] = make(childName, child, childPath)
+    }
+    return handle
+  }
+  const root = make(name, spec, '')
+  return { root, folders, getFile }
+}
+
+describe('toggle', () => {
+  beforeEach(() => {
+    picker.mockReset()
+    rejectWith = null
+    vi.useRealTimers()
+  })
+
+  it('idle: opening reads only the root', async () => {
+    const t = fakeTree('r', { a: { b: { c: null } }, f: null })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    expect(t.folders['a'].values).not.toHaveBeenCalled()
+    expect(t.root.getDirectoryHandle).not.toHaveBeenCalled()
+  })
+
+  it('fast first expand: children, expanded, no loading, no getFile', async () => {
+    const t = fakeTree('r', { a: { z: null, b: {} } })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await toggle('a')
+    const snap = getSnapshot()
+    expect(snap.expandedIds.has('a')).toBe(true)
+    expect(snap.loadingIds.size).toBe(0)
+    expect(snap.childIds['a']).toEqual(['a/b', 'a/z'])
+    expect(snap.items['a/b'].isDirectory).toBe(true)
+    expect(t.getFile).not.toHaveBeenCalled()
+  })
+
+  it('re-expand uses the cache with no read', async () => {
+    const t = fakeTree('r', { a: { x: null } })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await toggle('a')
+    await toggle('a')
+    expect(getSnapshot().expandedIds.has('a')).toBe(false)
+    await toggle('a')
+    expect(getSnapshot().expandedIds.has('a')).toBe(true)
+    expect(t.folders['a'].values).toHaveBeenCalledTimes(1)
+    expect(t.root.getDirectoryHandle).toHaveBeenCalledTimes(1)
+  })
+
+  it('nested state survives collapse and re-expand', async () => {
+    const t = fakeTree('r', { a: { b: { c: null } } })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await toggle('a')
+    await toggle('a/b')
+    await toggle('a')
+    await toggle('a')
+    const snap = getSnapshot()
+    expect(snap.expandedIds.has('a')).toBe(true)
+    expect(snap.expandedIds.has('a/b')).toBe(true)
+    expect(snap.childIds['a/b']).toEqual(['a/b/c'])
+  })
+
+  it('empty folder caches an empty child list', async () => {
+    const t = fakeTree('r', { e: {} })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await toggle('e')
+    expect(getSnapshot().childIds['e']).toEqual([])
+    expect(getSnapshot().expandedIds.has('e')).toBe(true)
+  })
+
+  it('slow read shows loading after 150 ms, then children', async () => {
+    vi.useFakeTimers()
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let slowOn = false
+    const t = fakeTree('r', { a: { x: null } }, { delay: () => (slowOn ? gate : Promise.resolve()) })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    slowOn = true
+
+    const done = toggle('a')
+    await vi.advanceTimersByTimeAsync(149)
+    expect(getSnapshot().loadingIds.has('a')).toBe(false)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(getSnapshot().loadingIds.has('a')).toBe(true)
+    release()
+    await done
+    expect(getSnapshot().loadingIds.has('a')).toBe(false)
+    expect(getSnapshot().childIds['a']).toEqual(['a/x'])
+  })
+
+  it('fast read never shows loading', async () => {
+    vi.useFakeTimers()
+    const t = fakeTree('r', { a: { x: null } })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await toggle('a')
+    await vi.advanceTimersByTimeAsync(500)
+    expect(getSnapshot().loadingIds.size).toBe(0)
+  })
+
+  it('double activation while pending reads once', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let slowOn = false
+    const t = fakeTree('r', { a: { x: null } }, { delay: () => (slowOn ? gate : Promise.resolve()) })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    slowOn = true
+    const first = toggle('a')
+    const second = toggle('a')
+    release()
+    await Promise.all([first, second])
+    expect(t.folders['a'].values).toHaveBeenCalledTimes(1)
+    expect(getSnapshot().childIds['a']).toEqual(['a/x'])
+    expect(getSnapshot().expandedIds.has('a')).toBe(true)
+  })
+
+  it('failed read leaves the folder collapsed and swallows the error', async () => {
+    const t = fakeTree('r', { a: { x: null } }, { fail: ['a'] })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await expect(toggle('a')).resolves.toBeUndefined()
+    const snap = getSnapshot()
+    expect(snap.expandedIds.has('a')).toBe(false)
+    expect(snap.childIds['a']).toBeUndefined()
+    expect(snap.loadingIds.size).toBe(0)
+  })
+
+  it('stale read is discarded when a new workspace opens', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let slowOn = false
+    const old = fakeTree('old', { a: { x: null } }, { delay: () => (slowOn ? gate : Promise.resolve()) })
+    picker.mockResolvedValue(old.root)
+    await openWorkspace()
+    slowOn = true
+    const stale = toggle('a')
+    picker.mockResolvedValue(fakeTree('new', { a: null }).root)
+    await openWorkspace()
+    release()
+    await stale
+    const snap = getSnapshot()
+    expect(snap.rootName).toBe('new')
+    expect(snap.childIds).toEqual({})
+    expect(snap.expandedIds.size).toBe(0)
+    expect(Object.keys(snap.items)).toEqual(['a'])
+  })
+
+  it('opening a new workspace discards expansion state', async () => {
+    const t = fakeTree('r', { a: { x: null } })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await toggle('a')
+    picker.mockResolvedValue(fakeTree('r2', { a: {} }).root)
+    await openWorkspace()
+    expect(getSnapshot().expandedIds.size).toBe(0)
+    expect(getSnapshot().childIds).toEqual({})
   })
 })

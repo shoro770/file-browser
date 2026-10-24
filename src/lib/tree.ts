@@ -38,6 +38,17 @@ export function toId(parentId: string, name: string): string {
 }
 
 /**
+ * Gets the id of an item's parent folder.
+ *
+ * @param id - A normalized relative path.
+ * @returns The parent's id; `''` (the Workspace Folder) for top-level items.
+ */
+export function parentId(id: string): string {
+  const slash = id.lastIndexOf('/')
+  return slash < 0 ? '' : id.slice(0, slash)
+}
+
+/**
  * Builds the display path for an item id.
  *
  * @param id - A normalized relative path (`''` for the root).

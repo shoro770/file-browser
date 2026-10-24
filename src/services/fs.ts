@@ -74,6 +74,18 @@ export async function listChildren(handle: WorkspaceHandle, parentId: string): P
 }
 
 /**
+ * Opens a child folder of a folder handle (read-only; never creates it).
+ *
+ * @param parent - The containing folder.
+ * @param name - Base name of the child folder.
+ * @returns The child folder's handle.
+ * @throws If the child can't be opened.
+ */
+export function openChildDirectory(parent: WorkspaceHandle, name: string): Promise<WorkspaceHandle> {
+  return parent.getDirectoryHandle(name)
+}
+
+/**
  * Reads the name of a folder handle.
  *
  * @param handle - The folder.

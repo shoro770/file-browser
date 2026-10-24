@@ -7,3 +7,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-2-open-a-folder-and-see-its-top-level.md`
   summary: Add a DOM test environment and component tests for `Tree`/`App` (single `tabIndex=0` row, focus handoff, denied alert, persistent live region).
   evidence: A regression such as `tabIndex={0}` on every row, or a removed `setDenied(false)`, passes build, lint and `npm test`; needs jsdom or happy-dom plus Testing Library (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-3-expand-and-collapse-folders.md`
+  summary: Cover `Tree`/`TreeNode` rendering (visible-set tab stop after collapse, `aria-expanded`, `role="group"`, `aria-level`, Enter/Space/Right toggling without bubbling) once a DOM test environment exists.
+  evidence: Removing `role="group"`, the `target === currentTarget` key guard, or the visible-set check passes build, lint and `npm test` (unverified medium); extends the Story 1.2 component-test entry.

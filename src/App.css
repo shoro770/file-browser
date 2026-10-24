@@ -154,12 +154,67 @@
   border-inline-start-color: var(--color-accent);
 }
 
-.tree-row:focus-visible {
+.tree-item {
+  outline: none;
+}
+
+.tree-item:focus-visible > .tree-row {
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: -2px;
+}
+
+.tree-group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tree-row__indent {
+  flex: none;
+  width: var(--size-tree-indent);
+}
+
+.tree-row__twisty {
+  display: inline-flex;
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.tree-row--placeholder {
+  color: var(--color-text-muted);
 }
 
 .tree-row .glyph {
   flex: none;
+}
+
+.chevron {
+  transition: transform var(--transition-duration);
+}
+
+.is-expanded .chevron {
+  transform: rotate(90deg);
+}
+
+.spinner {
+  animation: tree-spin 800ms linear infinite;
+}
+
+@keyframes tree-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
 }
 
 .tree-row__label {

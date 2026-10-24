@@ -12,13 +12,13 @@ const DENIED_MESSAGE = "Access to that folder wasn't granted. Choose a folder to
 
 /** App shell: toolbar over a tree pane and a preview pane, or the unsupported-browser screen. */
 export default function App({ folderPickerSupported }: AppProps) {
-  const { snapshot, openWorkspace } = useTree()
+  const { snapshot, openWorkspace, toggle } = useTree()
   const [status, setStatus] = useState('')
   const [denied, setDenied] = useState(false)
   const [focusToken, setFocusToken] = useState(0)
   const openButtonRef = useRef<HTMLButtonElement>(null)
 
-  const { rootName, rootIds, items, selectedId } = snapshot
+  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, selectedId } = snapshot
 
   useEffect(() => {
     document.title = rootName === null ? 'file-browser' : `${rootName} - file-browser`
@@ -39,8 +39,6 @@ export default function App({ folderPickerSupported }: AppProps) {
     if (outcome.status === 'denied') setDenied(true)
     openButtonRef.current?.focus()
   }
-
-  const rows = rootIds.map((id) => items[id])
 
   return (
     <div className="shell">
@@ -63,14 +61,24 @@ export default function App({ folderPickerSupported }: AppProps) {
         )}
       </header>
       <div className="shell__tree">
-        {rows.length > 0 && (
-          <Tree key={focusToken} items={rows} selectedId={selectedId} focusToken={focusToken} />
+        {rootIds.length > 0 && (
+          <Tree
+            key={focusToken}
+            items={items}
+            rootIds={rootIds}
+            childIds={childIds}
+            expandedIds={expandedIds}
+            loadingIds={loadingIds}
+            onToggle={toggle}
+            selectedId={selectedId}
+            focusToken={focusToken}
+          />
         )}
       </div>
       <main className="shell__preview">
         {rootName === null ? (
           <OpenFolderPrompt onOpen={handleOpen} />
-        ) : rows.length === 0 ? (
+        ) : rootIds.length === 0 ? (
           <div className="prompt">
             <h2 className="prompt__title">This folder is empty.</h2>
             <p className="prompt__body">There are no files here to show.</p>

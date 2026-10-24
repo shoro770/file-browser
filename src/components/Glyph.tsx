@@ -30,6 +30,47 @@ const SHAPES: Record<GlyphKind, ReactNode> = {
   ),
 }
 
+/** Expand/collapse chevron (points right; CSS rotates it 90 degrees when expanded). Decorative. */
+export function Chevron() {
+  return (
+    <svg
+      className="chevron"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M6 3.5l4.5 4.5L6 12.5" />
+    </svg>
+  )
+}
+
+/** Loading spinner in the chevron's place (CSS animates it). Decorative. */
+export function Spinner() {
+  return (
+    <svg
+      className="spinner"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M8 2.5a5.5 5.5 0 1 0 5.5 5.5" />
+    </svg>
+  )
+}
+
 /** A 16px inline-SVG kind glyph; decorative, so hidden from assistive technology. */
 export default function Glyph({ kind }: GlyphProps) {
   return (

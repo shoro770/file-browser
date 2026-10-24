@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { glyphForName, toId, toPath } from './tree'
+import { glyphForName, parentId, toId, toPath } from './tree'
+
+describe('parentId', () => {
+  it('is the root for top-level ids', () => {
+    expect(parentId('src')).toBe('')
+    expect(parentId('')).toBe('')
+  })
+  it('drops the last segment', () => {
+    expect(parentId('src/lib/tree.ts')).toBe('src/lib')
+  })
+  it('inverts toId', () => {
+    expect(parentId(toId('a/b', 'c'))).toBe('a/b')
+  })
+})
 
 describe('toId', () => {
   it('uses the bare name under the root', () => {
