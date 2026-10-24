@@ -13,7 +13,8 @@ Client-side file browser: Vite, React, TypeScript. Read-only access to the user'
 - Never edit files outside the stated scope of the task.
 - Never commit with failing types or lint — `npm run build` and `npm run lint` must pass first.
 - After editing, run `git status` to confirm only the intended files changed.
-- Never break file-list accessibility: keep `FileRow`'s `role="option"`, `aria-selected`, `tabIndex` and Enter/Space selection, and the `role="listbox"` list; previews must stay keyboard-reachable.
+- Never break file-tree accessibility: keep the `role="tree"` container, `FileRow`'s `role="treeitem"` and `aria-selected`, and `role="group"` around each expanded folder's children. Folders keep `aria-expanded`; items keep `aria-level`, `aria-setsize` and `aria-posinset` where the hierarchy needs them.
+- Keep roving tabindex: exactly one treeitem has `tabIndex={0}` (the focused or selected one), all others `-1`, so the tree is a single Tab stop. Arrow Up/Down move between visible items, Right expands a folder or moves to its first child, Left collapses it or moves to its parent, Home/End jump to the first/last visible item, and Enter/Space select. Previews must stay keyboard-reachable.
 
 ## Where things are
 
