@@ -19,47 +19,83 @@ export const FILE_CATEGORIES = [
 /** Broad content category of a file, used for icons and filtering. */
 export type FileCategory = (typeof FILE_CATEGORIES)[number]
 
-/** A file or directory in the browsed tree. */
+/** A file or directory in the browsed tree. Pure, serializable data. */
 export interface FileItem {
-  /** Stable unique identifier. */
+  /** Normalized relative path: `/`-separated, no leading or trailing slash; the root is `''`. */
   id: string
   /** Base name including extension, e.g. `"report.pdf"`. */
   name: string
-  /** Full path from the browsed root, e.g. `"/documents/report.pdf"`. */
+  /** `"/"` + `id`, e.g. `"/documents/report.pdf"`. */
   path: string
-  /** Size in bytes (format with `formatSize`). */
-  size: number
   /** `true` for directories, `false` for regular files. */
   isDirectory: boolean
-  /** Last modification time; `null` when unknown (e.g. directories read from disk). */
-  updatedAt: Date | null
-  /** Content category. */
-  category: FileCategory
-  /** URL the file content can be loaded from (used by previews); omitted if unavailable. */
-  url?: string
-  /** Directory contents; omitted for files and for directories not yet loaded. */
-  children?: FileItem[]
+  /** Size in bytes (format with `formatSize`); absent until the file is read. */
+  size?: number
+  /** Last modification time; absent until the file is read. */
+  updatedAt?: Date
+  /** Content category; absent for directories. */
+  category?: FileCategory
 }
 
-/** Props for the `FileRow` component. */
-export interface FileRowProps {
-  item: FileItem
-  /** Whether this row is the active selection. */
-  selected?: boolean
-  /**
-   * Roving-tabindex value: `0` makes the row a tab stop, `-1` removes it from
-   * the tab order (a parent listbox then moves focus with arrow keys).
-   * Defaults to `0` for standalone use.
-   */
-  tabIndex?: 0 | -1
-  /** Called on click, Enter or Space. */
-  onSelect?: (item: FileItem) => void
+/** Every kind-glyph shape, in display order. Source of truth for `GlyphKind`. */
+export const GLYPH_KINDS = ['folder', 'file', 'image', 'document', 'pdf', 'text', 'binary'] as const
+
+/** One of the seven inline-SVG kind glyphs. */
+export type GlyphKind = (typeof GLYPH_KINDS)[number]
+
+/** Immutable view of the tree store, as read by components. */
+export interface TreeSnapshot {
+  /** Name of the open Workspace Folder; `null` when none is open. */
+  rootName: string | null
+  /** Every loaded item, keyed by `id`. */
+  items: Readonly<Record<string, FileItem>>
+  /** Ids of the Workspace Folder's immediate children, in display order. */
+  rootIds: readonly string[]
+  /** Id of the selected file; `null` when nothing is selected. */
+  selectedId: string | null
 }
 
-/** Props for the `PdfPreview` component. */
-export interface PdfPreviewProps {
-  /** A PDF file with a `url` to load; without a `url` only the header is shown. */
+/** Result of asking the store to open a folder. */
+export type OpenOutcome =
+  | { status: 'opened'; name: string; count: number }
+  | { status: 'cancelled' }
+  | { status: 'denied' }
+
+/** Props for the `Glyph` component. */
+export interface GlyphProps {
+  kind: GlyphKind
+}
+
+/** Props for the `Tree` component. */
+export interface TreeProps {
+  /** Items to show, already in display order. */
+  items: readonly FileItem[]
+  /** Id of the selected item, or `null`. */
+  selectedId: string | null
+  /** Changing this value moves focus to the first row. */
+  focusToken: number
+}
+
+/** Props for the `TreeNode` component. */
+export interface TreeNodeProps {
   item: FileItem
+  /** 1-based depth in the tree. */
+  level: number
+  /** Number of siblings, including this item. */
+  setSize: number
+  /** 1-based position among siblings. */
+  posInSet: number
+  selected: boolean
+  /** Roving-tabindex value: `0` for the single tab stop, `-1` otherwise. */
+  tabIndex: 0 | -1
+  /** Called when the row receives focus. */
+  onFocusRow: (id: string) => void
+}
+
+/** Props for the `OpenFolderPrompt` component. */
+export interface OpenFolderPromptProps {
+  /** Called when the user activates Open folder. */
+  onOpen: () => void
 }
 
 /** Field a file listing can be sorted by. */

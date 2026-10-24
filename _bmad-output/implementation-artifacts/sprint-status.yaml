@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-25-2026 01:41
-last_updated: 10-25-2026 01:55
+last_updated: 10-25-2026 02:10
 project: file-browser
 project_key: NOKEY
 tracking_system: file-system
@@ -37,7 +37,7 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   epic-1: in-progress
   1-1-app-shell-design-tokens-and-unsupported-browser-screen: review
-  1-2-open-a-folder-and-see-its-top-level: backlog
+  1-2-open-a-folder-and-see-its-top-level: review
   1-3-expand-and-collapse-folders: backlog
   1-4-select-a-file: backlog
   1-5-navigate-the-tree-by-keyboard: backlog

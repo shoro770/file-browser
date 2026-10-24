@@ -6,6 +6,10 @@
 }
 
 .shell__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
   grid-column: 1 / -1;
   min-height: var(--size-toolbar-height);
   padding: var(--space-2);
@@ -50,4 +54,117 @@
 
 .unsupported p {
   margin: 0;
+}
+
+.shell__folder-name {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shell__alert {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--color-danger-text);
+  font-size: var(--font-size-label);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: var(--font-size-label);
+  cursor: pointer;
+  transition: background-color var(--transition-duration);
+}
+
+.button:hover {
+  background: var(--color-row-hover);
+}
+
+.button--primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border-color: var(--color-accent);
+}
+
+.button--primary:hover {
+  background: var(--color-accent);
+}
+
+.prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 30rem;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-4);
+  text-align: center;
+}
+
+.prompt__glyph {
+  color: var(--color-text-muted);
+}
+
+.prompt__title {
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: var(--font-size-heading-lg);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.prompt__body {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--size-row-height);
+  padding-inline: var(--space-2);
+  font-size: var(--font-size-tree-row);
+  border-inline-start: 3px solid transparent;
+  transition: background-color var(--transition-duration);
+}
+
+.tree-row:hover {
+  background: var(--color-row-hover);
+}
+
+.tree-row.is-selected {
+  background: var(--color-row-selected);
+  border-inline-start-color: var(--color-accent);
+}
+
+.tree-row:focus-visible {
+  outline-offset: -2px;
+}
+
+.tree-row .glyph {
+  flex: none;
+}
+
+.tree-row__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
