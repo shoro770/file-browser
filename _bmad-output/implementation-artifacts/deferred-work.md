@@ -13,3 +13,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-4-select-a-file.md`
   summary: Add component tests for `TreeNode` activation routing (file selects, folder toggles, `event.repeat` ignored) and the `App` "Previewing {name}" announcement once a DOM test environment exists.
   evidence: Swapping the `activate()` branches or dropping the announcement passes build, lint and `npm test` because the store never receives folder ids (unverified medium); extends the Story 1.2 and 1.3 component-test entries.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-5-navigate-the-tree-by-keyboard.md`
+  summary: Add component tests for the `Tree` keyboard map (arrows, Right/Left, Home/End, Enter/Space, `event.repeat`, modifier pass-through) and the tab-stop and focus-restore repair once a DOM test environment exists.
+  evidence: Swapping ArrowUp/ArrowDown or returning null from `survivingKey` passes build, lint and `npm test` because only the pure helpers are tested (unverified medium); extends the Story 1.2 to 1.4 component-test entries.

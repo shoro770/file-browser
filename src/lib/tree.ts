@@ -2,7 +2,7 @@
  * Pure helpers for tree ids, paths and kind glyphs.
  */
 
-import type { GlyphKind } from '../types'
+import type { FileItem, GlyphKind, VisibleRow } from '../types'
 import { categorizeFile } from './files'
 
 /** Extensions (lower-case, no dot) shown with the text glyph. */
@@ -77,4 +77,86 @@ export function glyphForName(name: string, isDirectory: boolean): GlyphKind {
   if (BINARY_EXTENSIONS.includes(extension)) return 'binary'
   if (categorizeFile(name) === 'image') return 'image'
   return 'file'
+}
+
+/** Prefix of placeholder row keys; real ids are relative paths and never start with `/`. */
+export const PLACEHOLDER_PREFIX = '/placeholder:'
+
+/**
+ * Builds the row key of a folder's placeholder row.
+ *
+ * @param folderId - Id of the folder the placeholder sits in.
+ * @returns The key, `PLACEHOLDER_PREFIX` followed by the folder id.
+ */
+export function placeholderKey(folderId: string): string {
+  return PLACEHOLDER_PREFIX + folderId
+}
+
+/**
+ * Flattens the tree into the rows currently visible, in display order, including the
+ * "Loading..." and "Empty folder" placeholder rows.
+ *
+ * @param items - Every loaded item, keyed by id.
+ * @param rootIds - Ids of the top-level rows.
+ * @param childIds - Ordered child ids of every listed folder.
+ * @param expandedIds - Ids of expanded folders.
+ * @param loadingIds - Ids of folders showing a loading state.
+ * @returns The visible rows; placeholder keys are `placeholderKey(folderId)`.
+ */
+export function visibleRows(
+  items: Readonly<Record<string, FileItem>>,
+  rootIds: readonly string[],
+  childIds: Readonly<Record<string, readonly string[]>>,
+  expandedIds: ReadonlySet<string>,
+  loadingIds: ReadonlySet<string>,
+): VisibleRow[] {
+  const rows: VisibleRow[] = []
+  const walk = (ids: readonly string[], parentKey: string | null) => {
+    for (const id of ids) {
+      const item = items[id]
+      const expanded = item.isDirectory && expandedIds.has(id)
+      rows.push({ key: id, itemId: id, parentKey, isDirectory: item.isDirectory, expanded, name: item.name })
+      if (!expanded) continue
+      const childList = childIds[id]
+      const placeholder: VisibleRow = {
+        key: placeholderKey(id), itemId: null, parentKey: id, isDirectory: false, expanded: false, name: '',
+      }
+      if (loadingIds.has(id)) rows.push(placeholder)
+      else if (childList?.length === 0) rows.push(placeholder)
+      else if (childList) walk(childList, id)
+    }
+  }
+  walk(rootIds, null)
+  return rows
+}
+
+/**
+ * Finds the next row whose item name starts with the query, wrapping around.
+ *
+ * @param rows - The visible rows.
+ * @param fromIndex - Index of the focused row, or `-1` if none.
+ * @param query - The accumulated type-ahead text; a single character starts after `fromIndex`.
+ * @returns The matching row index, or `-1` when nothing matches.
+ */
+export function findTypeAhead(rows: readonly VisibleRow[], fromIndex: number, query: string): number {
+  if (rows.length === 0 || query === '') return -1
+  const needle = query.toLowerCase()
+  const start = query.length === 1 ? fromIndex + 1 : Math.max(fromIndex, 0)
+  for (let offset = 0; offset < rows.length; offset++) {
+    const index = (start + offset) % rows.length
+    const row = rows[index]
+    if (row.itemId !== null && row.name.toLowerCase().startsWith(needle)) return index
+  }
+  return -1
+}
+
+/**
+ * Computes how many rows PageUp/PageDown move.
+ *
+ * @param clientHeight - Visible height of the tree container in px.
+ * @param rowHeight - Height of one row in px.
+ * @returns `floor(clientHeight / rowHeight)`, at least 1.
+ */
+export function pageStep(clientHeight: number, rowHeight: number): number {
+  return Math.max(1, Math.floor(clientHeight / rowHeight))
 }

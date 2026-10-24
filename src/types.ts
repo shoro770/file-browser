@@ -69,6 +69,22 @@ export type OpenOutcome =
   | { status: 'cancelled' }
   | { status: 'denied' }
 
+/** One visible row of the tree, in display order (placeholder rows included). */
+export interface VisibleRow {
+  /** The item id, or `placeholderKey(folderId)` (`/placeholder:{folderId}`) for a placeholder row. */
+  key: string
+  /** The item id; `null` for a placeholder row. */
+  itemId: string | null
+  /** Key of the parent row; `null` for top-level rows. */
+  parentKey: string | null
+  /** Whether the row is a folder. */
+  isDirectory: boolean
+  /** Whether the row is an expanded folder. */
+  expanded: boolean
+  /** Item name; `''` for a placeholder row. */
+  name: string
+}
+
 /** Props for the `Glyph` component. */
 export interface GlyphProps {
   kind: GlyphKind
@@ -108,8 +124,8 @@ export interface TreeNodeProps {
   selected: boolean
   /** Roving-tabindex value: `0` for the single tab stop, `-1` otherwise. */
   tabIndex: 0 | -1
-  /** Called when the row receives focus. */
-  onFocusRow: (id: string) => void
+  /** Called with the row key when the row receives focus. */
+  onFocusRow: (key: string) => void
   /** Folders only: whether the folder is expanded. */
   expanded: boolean
   /** Folders only: whether the first read is slow enough to show a spinner. */
@@ -124,6 +140,12 @@ export interface TreeNodeProps {
 
 /** Props for a placeholder row ("Loading...", "Empty folder"). */
 export interface TreePlaceholderProps {
+  /** Row key, `placeholderKey(folderId)`. */
+  rowKey: string
+  /** Roving-tabindex value: `0` for the single tab stop, `-1` otherwise. */
+  tabIndex: 0 | -1
+  /** Called with the row key when the row receives focus. */
+  onFocusRow: (key: string) => void
   /** Visible text. */
   label: string
   /** 1-based depth in the tree. */

@@ -1,4 +1,3 @@
-import type { KeyboardEvent } from 'react'
 import { glyphForName } from '../lib/tree'
 import type { TreeNodeProps, TreePlaceholderProps } from '../types'
 import Glyph, { Chevron, Spinner } from './Glyph'
@@ -11,7 +10,7 @@ function Indent({ level }: { level: number }) {
 }
 
 /** A disabled, non-selectable row such as "Loading..." or "Empty folder". */
-export function TreePlaceholder({ label, level }: TreePlaceholderProps) {
+export function TreePlaceholder({ label, level, rowKey, tabIndex, onFocusRow }: TreePlaceholderProps) {
   return (
     <li
       className="tree-item"
@@ -20,7 +19,11 @@ export function TreePlaceholder({ label, level }: TreePlaceholderProps) {
       aria-setsize={1}
       aria-posinset={1}
       aria-disabled="true"
-      tabIndex={-1}
+      tabIndex={tabIndex}
+      data-key={rowKey}
+      onFocus={(event) => {
+        if (event.target === event.currentTarget) onFocusRow(rowKey)
+      }}
     >
       <div className="tree-row tree-row--placeholder">
         <Indent level={level} />
@@ -54,17 +57,6 @@ export default function TreeNode({
     else onSelect(item.id)
   }
 
-  function handleKeyDown(event: KeyboardEvent<HTMLLIElement>) {
-    if (event.target !== event.currentTarget) return
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      if (!event.repeat) activate()
-    } else if (event.key === 'ArrowRight' && item.isDirectory && !expanded) {
-      event.preventDefault()
-      onToggle(item.id)
-    }
-  }
-
   const classes = ['tree-row']
   if (selected) classes.push('is-selected')
   if (expanded) classes.push('is-expanded')
@@ -79,11 +71,10 @@ export default function TreeNode({
       aria-expanded={item.isDirectory ? expanded : undefined}
       aria-selected={item.isDirectory ? undefined : selected}
       tabIndex={tabIndex}
-      data-id={item.id}
+      data-key={item.id}
       onFocus={(event) => {
         if (event.target === event.currentTarget) onFocusRow(item.id)
       }}
-      onKeyDown={handleKeyDown}
     >
       <div
         className={classes.join(' ')}
