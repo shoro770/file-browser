@@ -19,7 +19,7 @@ vi.stubGlobal('window', {
   },
 })
 
-const { openWorkspace, getSnapshot, toggle } = await import('./tree')
+const { openWorkspace, getSnapshot, toggle, select, subscribe } = await import('./tree')
 
 describe('openWorkspace', () => {
   beforeEach(() => {
@@ -267,5 +267,80 @@ describe('toggle', () => {
     await openWorkspace()
     expect(getSnapshot().expandedIds.size).toBe(0)
     expect(getSnapshot().childIds).toEqual({})
+  })
+})
+
+describe('select', () => {
+  beforeEach(() => {
+    picker.mockReset()
+    rejectWith = null
+    vi.useRealTimers()
+  })
+
+  async function open(spec: Spec) {
+    const t = fakeTree('r', spec)
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    return t
+  }
+
+  it('selects a file without calling getFile', async () => {
+    const t = await open({ a: null, b: null })
+    select('a')
+    expect(getSnapshot().selectedId).toBe('a')
+    expect(t.getFile).not.toHaveBeenCalled()
+  })
+
+  it('replaces the selection', async () => {
+    await open({ a: null, b: null })
+    select('a')
+    select('b')
+    expect(getSnapshot().selectedId).toBe('b')
+  })
+
+  it('re-selecting the same file does not publish', async () => {
+    await open({ a: null })
+    select('a')
+    const before = getSnapshot()
+    const listener = vi.fn()
+    const unsubscribe = subscribe(listener)
+    select('a')
+    unsubscribe()
+    expect(listener).not.toHaveBeenCalled()
+    expect(getSnapshot()).toBe(before)
+  })
+
+  it('ignores folder, unknown and empty ids', async () => {
+    await open({ a: null, d: {} })
+    select('a')
+    const before = getSnapshot()
+    select('d')
+    select('nope')
+    select(null as unknown as string)
+    expect(getSnapshot()).toBe(before)
+  })
+
+  it('survives collapsing the parent folder', async () => {
+    await open({ d: { f: null } })
+    await toggle('d')
+    select('d/f')
+    await toggle('d')
+    expect(getSnapshot().expandedIds.has('d')).toBe(false)
+    expect(getSnapshot().selectedId).toBe('d/f')
+  })
+
+  it('toggling a folder leaves the selection alone', async () => {
+    await open({ a: null, d: { f: null } })
+    select('a')
+    await toggle('d')
+    expect(getSnapshot().selectedId).toBe('a')
+  })
+
+  it('is cleared by opening a new workspace', async () => {
+    await open({ a: null })
+    select('a')
+    picker.mockResolvedValue(fakeTree('r2', { a: null }).root)
+    await openWorkspace()
+    expect(getSnapshot().selectedId).toBeNull()
   })
 })

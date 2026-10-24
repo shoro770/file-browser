@@ -88,6 +88,8 @@ export interface TreeProps {
   loadingIds: ReadonlySet<string>
   /** Called to expand or collapse a folder. */
   onToggle: (id: string) => void
+  /** Called to select a file. */
+  onSelect: (id: string) => void
   /** Id of the selected item, or `null`. */
   selectedId: string | null
   /** Changing this value moves focus to the first row. */
@@ -114,6 +116,8 @@ export interface TreeNodeProps {
   loading: boolean
   /** Called to expand or collapse a folder row. */
   onToggle: (id: string) => void
+  /** Called to select a file row. */
+  onSelect: (id: string) => void
   /** Rendered inside the row's `role="group"` (child rows or placeholders). */
   children?: ReactNode
 }

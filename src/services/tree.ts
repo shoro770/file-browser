@@ -95,6 +95,18 @@ export async function openWorkspace(): Promise<OpenOutcome> {
   return { status: 'opened', name, count: children.length }
 }
 
+/**
+ * Selects a file. Accepts only a loaded, non-directory id; anything else, and the
+ * already-selected id, is a silent no-op.
+ *
+ * @param id - Id of the file row to select.
+ */
+export function select(id: string): void {
+  const item = snapshot.items[id]
+  if (!item || item.isDirectory || id === snapshot.selectedId) return
+  publish({ ...snapshot, selectedId: id })
+}
+
 /** Returns a copy of `set` with `id` added or removed. */
 function withMember(set: ReadonlySet<string>, id: string, present: boolean): Set<string> {
   const next = new Set(set)

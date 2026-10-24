@@ -12,7 +12,7 @@ const DENIED_MESSAGE = "Access to that folder wasn't granted. Choose a folder to
 
 /** App shell: toolbar over a tree pane and a preview pane, or the unsupported-browser screen. */
 export default function App({ folderPickerSupported }: AppProps) {
-  const { snapshot, openWorkspace, toggle } = useTree()
+  const { snapshot, openWorkspace, toggle, select } = useTree()
   const [status, setStatus] = useState('')
   const [denied, setDenied] = useState(false)
   const [focusToken, setFocusToken] = useState(0)
@@ -38,6 +38,12 @@ export default function App({ folderPickerSupported }: AppProps) {
     }
     if (outcome.status === 'denied') setDenied(true)
     openButtonRef.current?.focus()
+  }
+
+  function handleSelect(id: string) {
+    if (id === selectedId) return
+    select(id)
+    setStatus(`Previewing ${items[id].name}`)
   }
 
   return (
@@ -70,6 +76,7 @@ export default function App({ folderPickerSupported }: AppProps) {
             expandedIds={expandedIds}
             loadingIds={loadingIds}
             onToggle={toggle}
+            onSelect={handleSelect}
             selectedId={selectedId}
             focusToken={focusToken}
           />

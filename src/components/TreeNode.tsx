@@ -46,13 +46,19 @@ export default function TreeNode({
   expanded,
   loading,
   onToggle,
+  onSelect,
   children,
 }: TreeNodeProps) {
+  function activate() {
+    if (item.isDirectory) onToggle(item.id)
+    else onSelect(item.id)
+  }
+
   function handleKeyDown(event: KeyboardEvent<HTMLLIElement>) {
     if (event.target !== event.currentTarget) return
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      if (item.isDirectory && !event.repeat) onToggle(item.id)
+      if (!event.repeat) activate()
     } else if (event.key === 'ArrowRight' && item.isDirectory && !expanded) {
       event.preventDefault()
       onToggle(item.id)
@@ -82,7 +88,7 @@ export default function TreeNode({
       <div
         className={classes.join(' ')}
         title={item.name}
-        onClick={item.isDirectory ? () => onToggle(item.id) : undefined}
+        onClick={activate}
       >
         <Indent level={level} />
         <span className="tree-row__twisty">

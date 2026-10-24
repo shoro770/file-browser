@@ -10,3 +10,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-3-expand-and-collapse-folders.md`
   summary: Cover `Tree`/`TreeNode` rendering (visible-set tab stop after collapse, `aria-expanded`, `role="group"`, `aria-level`, Enter/Space/Right toggling without bubbling) once a DOM test environment exists.
   evidence: Removing `role="group"`, the `target === currentTarget` key guard, or the visible-set check passes build, lint and `npm test` (unverified medium); extends the Story 1.2 component-test entry.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-select-a-file.md`
+  summary: Add component tests for `TreeNode` activation routing (file selects, folder toggles, `event.repeat` ignored) and the `App` "Previewing {name}" announcement once a DOM test environment exists.
+  evidence: Swapping the `activate()` branches or dropping the announcement passes build, lint and `npm test` because the store never receives folder ids (unverified medium); extends the Story 1.2 and 1.3 component-test entries.

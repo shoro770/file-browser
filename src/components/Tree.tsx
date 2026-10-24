@@ -15,6 +15,7 @@ export default function Tree({
   expandedIds,
   loadingIds,
   onToggle,
+  onSelect,
   selectedId,
   focusToken,
 }: TreeProps) {
@@ -63,6 +64,7 @@ export default function Tree({
           expanded={expanded}
           loading={loading}
           onToggle={onToggle}
+          onSelect={onSelect}
         >
           {children}
         </TreeNode>
