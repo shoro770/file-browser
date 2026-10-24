@@ -73,3 +73,15 @@ export interface SortOptions {
   field: SortField
   direction: SortDirection
 }
+
+/** Every available colour theme. Source of truth for `Theme`. */
+export const THEMES = ['light', 'dark', 'sand'] as const
+
+/** A named colour theme, applied as `data-theme` on `<html>`. */
+export type Theme = (typeof THEMES)[number]
+
+/** Props for the `App` component. */
+export interface AppProps {
+  /** Whether this browser can open a folder picker (`showDirectoryPicker`). */
+  folderPickerSupported: boolean
+}

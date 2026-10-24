@@ -1,160 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
-import { FileRow } from './components/FileRow'
-import { PdfPreview } from './components/PdfPreview'
-import { isPdf } from './lib/pdf'
-import { isFolderPickerSupported, pickFolder, revokeItemUrls } from './services/directory'
-import type { FileItem } from './types'
+import UnsupportedBrowser from './components/UnsupportedBrowser'
+import type { AppProps } from './types'
 import './App.css'
 
-/**
- * Sample data until the app reads a real directory. Covers every category.
- * Dates use the local-time constructor (month is 0-based) so they don't shift a
- * day for viewers west of UTC, as `new Date('2026-10-12')` would.
- */
-const MOCK_FILES: FileItem[] = [
-  {
-    id: '1',
-    name: 'documents',
-    path: '/documents',
-    size: 0,
-    isDirectory: true,
-    updatedAt: new Date(2026, 9, 12),
-    category: 'other',
-  },
-  {
-    id: '2',
-    name: 'report.pdf',
-    path: '/report.pdf',
-    url: '/sample.pdf',
-    size: 1048576,
-    isDirectory: false,
-    updatedAt: new Date(2026, 9, 15),
-    category: 'document',
-  },
-  {
-    id: '3',
-    name: 'vacation.jpg',
-    path: '/vacation.jpg',
-    size: 3460300,
-    isDirectory: false,
-    updatedAt: new Date(2026, 8, 2),
-    category: 'image',
-  },
-  {
-    id: '4',
-    name: 'demo-recording.mp4',
-    path: '/demo-recording.mp4',
-    size: 734003200,
-    isDirectory: false,
-    updatedAt: new Date(2026, 9, 3),
-    category: 'video',
-  },
-  {
-    id: '5',
-    name: 'podcast-episode-12.mp3',
-    path: '/podcast-episode-12.mp3',
-    size: 48234496,
-    isDirectory: false,
-    updatedAt: new Date(2026, 6, 30),
-    category: 'audio',
-  },
-  {
-    id: '6',
-    name: 'backup.zip',
-    path: '/backup.zip',
-    size: 15032385536,
-    isDirectory: false,
-    updatedAt: new Date(2026, 7, 21),
-    category: 'archive',
-  },
-  {
-    id: '7',
-    name: 'App.tsx',
-    path: '/App.tsx',
-    size: 12400,
-    isDirectory: false,
-    updatedAt: new Date(2026, 9, 18),
-    category: 'code',
-  },
-  {
-    id: '8',
-    name: 'notes.txt',
-    path: '/notes.txt',
-    size: 842,
-    isDirectory: false,
-    updatedAt: new Date(2026, 9, 17),
-    category: 'document',
-  },
-  {
-    id: '9',
-    name: 'LICENSE',
-    path: '/LICENSE',
-    size: 1071,
-    isDirectory: false,
-    updatedAt: new Date(2026, 0, 5),
-    category: 'other',
-  },
-]
-
-function App() {
-  const [files, setFiles] = useState<FileItem[]>(MOCK_FILES)
-  const [folderName, setFolderName] = useState<string | null>(null)
-  const [selected, setSelected] = useState<FileItem | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  // The items whose blob URLs are live, so they can be released on change/unmount.
-  const openedItems = useRef<FileItem[]>([])
-  const pickerSupported = isFolderPickerSupported()
-
-  useEffect(() => () => revokeItemUrls(openedItems.current), [])
-
-  async function handleOpenFolder() {
-    setError(null)
-    try {
-      const folder = await pickFolder()
-      if (!folder) return
-      revokeItemUrls(openedItems.current)
-      openedItems.current = folder.items
-      setFiles(folder.items)
-      setFolderName(folder.name)
-      setSelected(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not open the folder')
-    }
-  }
+/** App shell: toolbar over a tree pane and a preview pane, or the unsupported-browser screen. */
+export default function App({ folderPickerSupported }: AppProps) {
+  if (!folderPickerSupported) return <UnsupportedBrowser />
 
   return (
-    <main className="file-browser">
-      <h1>File Browser</h1>
-      <div className="toolbar">
-        <button type="button" onClick={handleOpenFolder} disabled={!pickerSupported}>
-          Open folder
-        </button>
-        <span className="toolbar-path">{folderName ? `${folderName}/` : 'Sample files'}</span>
-      </div>
-      {!pickerSupported && (
-        <p className="notice" role="status">
-          Opening a folder needs a Chromium browser such as Chrome or Edge.
-        </p>
-      )}
-      {error && (
-        <p className="notice" role="alert">
-          {error}
-        </p>
-      )}
-      <ul className="file-list" role="listbox" aria-label="Files">
-        {files.map((file) => (
-          <FileRow
-            key={file.id}
-            item={file}
-            selected={file.id === selected?.id}
-            onSelect={setSelected}
-          />
-        ))}
-      </ul>
-      {files.length === 0 && <p className="notice">This folder is empty.</p>}
-      {selected && isPdf(selected) && <PdfPreview item={selected} />}
-    </main>
+    <div className="shell">
+      <h1 className="visually-hidden">file-browser</h1>
+      <header className="shell__toolbar" />
+      <div className="shell__tree" />
+      <main className="shell__preview" />
+    </div>
   )
 }
-
-export default App
