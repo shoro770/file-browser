@@ -61,6 +61,8 @@ export interface TreeSnapshot {
   loadingIds: ReadonlySet<string>
   /** Ids of entries that could not be read. */
   unavailableIds: ReadonlySet<string>
+  /** Whether dotfiles are shown (the default) or hidden. */
+  showDotfiles: boolean
   /** Id of the selected file; `null` when nothing is selected. */
   selectedId: string | null
 }
@@ -106,6 +108,8 @@ export interface TreeProps {
   loadingIds: ReadonlySet<string>
   /** Ids of entries that could not be read. */
   unavailableIds: ReadonlySet<string>
+  /** Whether dotfiles are shown; when `false` they are left out of every level. */
+  showDotfiles: boolean
   /** Called to expand or collapse a folder. */
   onToggle: (id: string) => void
   /** Called to select a file. */
@@ -136,6 +140,8 @@ export interface TreeNodeProps {
   loading: boolean
   /** Whether the entry could not be read; shows the Unavailable mark. */
   unavailable: boolean
+  /** Whether the entry is a dotfile (or inside a dotfile folder); dims its glyph and label at rest. */
+  dotfile: boolean
   /** Called to expand or collapse a folder row. */
   onToggle: (id: string) => void
   /** Called to select a file row. */
@@ -156,6 +162,14 @@ export interface TreePlaceholderProps {
   label: string
   /** 1-based depth in the tree. */
   level: number
+}
+
+/** Props for the `HiddenFilesToggle` component. */
+export interface HiddenFilesToggleProps {
+  /** Whether dotfiles are currently shown. */
+  shown: boolean
+  /** Called when the user activates the toggle. */
+  onToggle: () => void
 }
 
 /** Props for the `OpenFolderPrompt` component. */

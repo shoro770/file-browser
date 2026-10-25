@@ -4,10 +4,11 @@
  * replaces all state.
  */
 
-import { parentId } from '../lib/tree'
+import { isDotfileId, parentId } from '../lib/tree'
 import type { FileItem, OpenOutcome, TreeSnapshot } from '../types'
 import { handleName, listChildren, openChildDirectory, pickDirectory } from './fs'
 import type { WorkspaceHandle } from './fs'
+import { readShowDotfiles, writeShowDotfiles } from './prefs'
 
 /** How long a first read may run before the Loading state shows. */
 const LOADING_DELAY_MS = 150
@@ -20,10 +21,11 @@ const EMPTY: TreeSnapshot = {
   expandedIds: new Set(),
   loadingIds: new Set(),
   unavailableIds: new Set(),
+  showDotfiles: true,
   selectedId: null,
 }
 
-let snapshot: TreeSnapshot = EMPTY
+let snapshot: TreeSnapshot = { ...EMPTY, showDotfiles: readShowDotfiles() }
 /** Handles of the root (`''`) and of every folder that has been expanded, by id. */
 let handles = new Map<string, WorkspaceHandle>()
 /** Folders with a first read in flight, each with its loading-delay timer. */
@@ -92,6 +94,7 @@ export async function openWorkspace(): Promise<OpenOutcome> {
     expandedIds: new Set(),
     loadingIds: new Set(),
     unavailableIds: new Set(),
+    showDotfiles: snapshot.showDotfiles,
     selectedId: null,
   })
   return { status: 'opened', name, count: children.length }
@@ -107,6 +110,21 @@ export function select(id: string): void {
   const item = snapshot.items[id]
   if (!item || item.isDirectory || id === snapshot.selectedId) return
   publish({ ...snapshot, selectedId: id })
+}
+
+/**
+ * Shows or hides dotfiles and stores the choice. Reads nothing from disk and leaves
+ * expansion alone; hiding clears a selection that is a dotfile or inside a dotfile folder.
+ * Setting the current value is a silent no-op.
+ *
+ * @param show - Whether dotfiles are shown.
+ */
+export function setShowDotfiles(show: boolean): void {
+  if (show === snapshot.showDotfiles) return
+  writeShowDotfiles(show)
+  const { selectedId } = snapshot
+  const clears = !show && selectedId !== null && isDotfileId(selectedId)
+  publish({ ...snapshot, showDotfiles: show, selectedId: clears ? null : selectedId })
 }
 
 /** Returns a copy of `set` with `id` added or removed. */

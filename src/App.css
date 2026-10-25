@@ -92,6 +92,14 @@
   background: var(--color-row-hover);
 }
 
+.button[aria-pressed='true'] {
+  background: var(--color-row-selected);
+}
+
+.button__state {
+  color: var(--color-text-muted);
+}
+
 .button--primary {
   background: var(--color-accent);
   color: var(--color-on-accent);
@@ -198,6 +206,27 @@
   flex: none;
 }
 
+/* Dotfiles: glyph and label only, at rest only; the row background, chevron and suffix stay as they are. */
+.tree-row--dotfile > .glyph,
+.tree-row--dotfile > .tree-row__label {
+  opacity: 0.6;
+  transition: opacity var(--transition-duration);
+}
+
+.tree-row--dotfile:hover > .glyph,
+.tree-row--dotfile:hover > .tree-row__label,
+.tree-row--dotfile.is-selected > .glyph,
+.tree-row--dotfile.is-selected > .tree-row__label {
+  opacity: 1;
+}
+
+@media (forced-colors: active) {
+  .tree-row--dotfile > .glyph,
+  .tree-row--dotfile > .tree-row__label {
+    opacity: 1;
+  }
+}
+
 .chevron {
   transition: transform var(--transition-duration);
 }
@@ -217,7 +246,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chevron {
+  .chevron,
+  .tree-row--dotfile > .glyph,
+  .tree-row--dotfile > .tree-row__label {
     transition: none;
   }
 

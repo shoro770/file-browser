@@ -19,7 +19,8 @@ vi.stubGlobal('window', {
   },
 })
 
-const { openWorkspace, getSnapshot, toggle, select, subscribe } = await import('./tree')
+const { openWorkspace, getSnapshot, toggle, select, setShowDotfiles, subscribe } = await import('./tree')
+const { readShowDotfiles } = await import('./prefs')
 
 describe('openWorkspace', () => {
   beforeEach(() => {
@@ -400,5 +401,100 @@ describe('select', () => {
     picker.mockResolvedValue(fakeTree('r2', { a: null }).root)
     await openWorkspace()
     expect(getSnapshot().selectedId).toBeNull()
+  })
+})
+
+describe('setShowDotfiles', () => {
+  const stored = new Map<string, string>()
+  const win = globalThis as unknown as { window: { localStorage?: unknown } }
+
+  beforeEach(() => {
+    picker.mockReset()
+    rejectWith = null
+    vi.useRealTimers()
+    stored.clear()
+    win.window.localStorage = {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => void stored.set(key, value),
+    }
+    setShowDotfiles(true)
+    stored.clear()
+  })
+
+  async function open(spec: Spec) {
+    const t = fakeTree('r', spec)
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    return t
+  }
+
+  it('defaults to shown', () => {
+    expect(getSnapshot().showDotfiles).toBe(true)
+  })
+
+  it('hides with no handle call and no collapse, keeping a non-dotfile selection', async () => {
+    const t = await open({ src: { 'a.ts': null, '.env': null }, '.git': { config: null } })
+    await toggle('src')
+    select('src/a.ts')
+    const reads = t.folders['src'].values.mock.calls.length
+    const before = getSnapshot()
+    setShowDotfiles(false)
+    const after = getSnapshot()
+    expect(after.showDotfiles).toBe(false)
+    expect(after.selectedId).toBe('src/a.ts')
+    expect(after.expandedIds).toBe(before.expandedIds)
+    expect(after.childIds).toBe(before.childIds)
+    expect(t.folders['src'].values.mock.calls.length).toBe(reads)
+    expect(t.root.getDirectoryHandle).toHaveBeenCalledTimes(1)
+  })
+
+  it('clears a dotfile selection and one inside a dotfile folder', async () => {
+    await open({ '.env': null, '.git': { config: null }, a: null })
+    select('.env')
+    setShowDotfiles(false)
+    expect(getSnapshot().selectedId).toBeNull()
+    setShowDotfiles(true)
+    await toggle('.git')
+    select('.git/config')
+    setShowDotfiles(false)
+    expect(getSnapshot().selectedId).toBeNull()
+  })
+
+  it('keeps a dotfile selection when showing, and a repeat value does not publish', async () => {
+    await open({ '.env': null })
+    select('.env')
+    const listener = vi.fn()
+    const unsubscribe = subscribe(listener)
+    setShowDotfiles(true)
+    unsubscribe()
+    expect(listener).not.toHaveBeenCalled()
+    expect(getSnapshot().selectedId).toBe('.env')
+  })
+
+  it('persists only showDotfiles', () => {
+    setShowDotfiles(false)
+    expect([...stored.entries()]).toEqual([['showDotfiles', 'false']])
+    expect(readShowDotfiles()).toBe(false)
+    setShowDotfiles(true)
+    expect(readShowDotfiles()).toBe(true)
+  })
+
+  it('reads invalid or missing values as shown, and survives failing storage', () => {
+    stored.set('showDotfiles', 'banana')
+    expect(readShowDotfiles()).toBe(true)
+    const blocked = () => {
+      throw new Error('blocked')
+    }
+    win.window.localStorage = { getItem: blocked, setItem: blocked }
+    expect(readShowDotfiles()).toBe(true)
+    expect(() => setShowDotfiles(false)).not.toThrow()
+    expect(getSnapshot().showDotfiles).toBe(false)
+  })
+
+  it('opening a new workspace keeps the flag', async () => {
+    await open({ a: null })
+    setShowDotfiles(false)
+    await open({ b: null })
+    expect(getSnapshot().showDotfiles).toBe(false)
   })
 })

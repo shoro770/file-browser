@@ -19,3 +19,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-6-unreadable-entries-stay-contained.md`
   summary: Add component tests for the Unavailable row (suffix, `aria-describedby` target text, "This folder can't be read." placeholder) and for `Tree.renderRows` agreeing with `visibleRows` on placeholder order, once a DOM test environment (or `renderToStaticMarkup`) exists.
   evidence: Deleting the `else if (unavailable)` branch in `Tree.tsx` or the `aria-describedby` passes build, lint and `npm test` because only the store and `visibleRows` are tested (unverified medium); extends the Story 1.2 to 1.5 component-test entries.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-hide-and-show-dotfiles.md`
+  summary: Add component tests for the Hidden files toggle (name, `aria-pressed`, description), the "No visible files" vs "Empty folder" label, the "Nothing to show." pane, the "Selection cleared" announcement and focus moving off a hidden row, once a DOM test environment exists.
+  evidence: Always labelling "Empty folder", dropping the `isDotfileId` guard in `App.handleToggleDotfiles`, or breaking the `lastKeys` hand-off passes build, lint and `npm test` because only `lib/` and the store are tested (unverified medium); extends the Story 1.2 to 1.6 component-test entries.

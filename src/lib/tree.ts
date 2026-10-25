@@ -93,8 +93,35 @@ export function placeholderKey(folderId: string): string {
 }
 
 /**
+ * Tells whether an entry is a dotfile: its own name, or any folder above it, begins with ".".
+ *
+ * @param id - A normalized relative path.
+ * @returns `true` if any `/`-separated segment of `id` starts with ".".
+ */
+export function isDotfileId(id: string): boolean {
+  return id.split('/').some((segment) => segment.startsWith('.'))
+}
+
+/**
+ * Leaves dotfiles out of a list of sibling ids when they are hidden. A hidden folder
+ * takes its whole subtree with it, so the entry's own name is enough to test.
+ *
+ * @param ids - Sibling ids, in display order.
+ * @param items - Every loaded item, keyed by id.
+ * @param showDotfiles - Whether dotfiles are shown.
+ * @returns `ids` itself when dotfiles are shown, else the ids whose names do not begin with ".".
+ */
+export function filterDotfiles(
+  ids: readonly string[],
+  items: Readonly<Record<string, FileItem>>,
+  showDotfiles: boolean,
+): readonly string[] {
+  return showDotfiles ? ids : ids.filter((id) => !items[id].name.startsWith('.'))
+}
+
+/**
  * Flattens the tree into the rows currently visible, in display order, including the
- * "Loading...", "Empty folder" and unavailable-folder placeholder rows.
+ * "Loading...", "Empty folder" (also "No visible files") and unavailable-folder placeholder rows.
  *
  * @param items - Every loaded item, keyed by id.
  * @param rootIds - Ids of the top-level rows.
@@ -102,6 +129,7 @@ export function placeholderKey(folderId: string): string {
  * @param expandedIds - Ids of expanded folders.
  * @param loadingIds - Ids of folders showing a loading state.
  * @param unavailableIds - Ids of folders that could not be read.
+ * @param showDotfiles - Whether dotfiles are shown; when `false` they and their subtrees are left out.
  * @returns The visible rows; placeholder keys are `placeholderKey(folderId)`.
  */
 export function visibleRows(
@@ -111,10 +139,11 @@ export function visibleRows(
   expandedIds: ReadonlySet<string>,
   loadingIds: ReadonlySet<string>,
   unavailableIds: ReadonlySet<string>,
+  showDotfiles: boolean,
 ): VisibleRow[] {
   const rows: VisibleRow[] = []
   const walk = (ids: readonly string[], parentKey: string | null) => {
-    for (const id of ids) {
+    for (const id of filterDotfiles(ids, items, showDotfiles)) {
       const item = items[id]
       const expanded = item.isDirectory && expandedIds.has(id)
       rows.push({ key: id, itemId: id, parentKey, isDirectory: item.isDirectory, expanded, name: item.name })
@@ -125,12 +154,31 @@ export function visibleRows(
       }
       if (loadingIds.has(id)) rows.push(placeholder)
       else if (unavailableIds.has(id)) rows.push(placeholder)
-      else if (childList?.length === 0) rows.push(placeholder)
+      else if (childList && filterDotfiles(childList, items, showDotfiles).length === 0) rows.push(placeholder)
       else if (childList) walk(childList, id)
     }
   }
   walk(rootIds, null)
   return rows
+}
+
+/**
+ * Finds the nearest row before `key` that is still visible, for moving focus off a removed row.
+ *
+ * @param rowKeys - Row keys in display order, as they were when `key` was last visible.
+ * @param key - Key of the row that disappeared.
+ * @param visibleKeys - Keys of the rows visible now.
+ * @returns The nearest earlier key that is in `visibleKeys`, or `null` if `key` is unknown or none survives.
+ */
+export function previousVisibleKey(
+  rowKeys: readonly string[],
+  key: string,
+  visibleKeys: ReadonlySet<string>,
+): string | null {
+  for (let index = rowKeys.indexOf(key) - 1; index >= 0; index--) {
+    if (visibleKeys.has(rowKeys[index])) return rowKeys[index]
+  }
+  return null
 }
 
 /**

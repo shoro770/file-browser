@@ -55,6 +55,7 @@ export default function TreeNode({
   expanded,
   loading,
   unavailable,
+  dotfile,
   onToggle,
   onSelect,
   children,
@@ -67,6 +68,7 @@ export default function TreeNode({
   const classes = ['tree-row']
   if (selected) classes.push('is-selected')
   if (expanded) classes.push('is-expanded')
+  if (dotfile) classes.push('tree-row--dotfile')
 
   return (
     <li

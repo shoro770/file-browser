@@ -14,6 +14,35 @@ export function readTheme(): string | null {
   }
 }
 
+/** localStorage key for dotfile visibility. */
+const SHOW_DOTFILES_KEY = 'showDotfiles'
+
+/**
+ * Reads the stored dotfile visibility.
+ *
+ * @returns `false` only if `"false"` is stored; `true` (shown) when absent, invalid or storage is unavailable.
+ */
+export function readShowDotfiles(): boolean {
+  try {
+    return window.localStorage.getItem(SHOW_DOTFILES_KEY) !== 'false'
+  } catch {
+    return true
+  }
+}
+
+/**
+ * Stores dotfile visibility. Failure (e.g. storage unavailable) is silent.
+ *
+ * @param show - Whether dotfiles are shown.
+ */
+export function writeShowDotfiles(show: boolean): void {
+  try {
+    window.localStorage.setItem(SHOW_DOTFILES_KEY, String(show))
+  } catch {
+    // Storage is optional; the preference just won't persist.
+  }
+}
+
 /**
  * Whether the system prefers a dark colour scheme.
  *

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import Glyph from './components/Glyph'
+import HiddenFilesToggle from './components/HiddenFilesToggle'
 import OpenFolderPrompt from './components/OpenFolderPrompt'
 import Tree from './components/Tree'
 import UnsupportedBrowser from './components/UnsupportedBrowser'
 import { useTree } from './hooks/useTree'
+import { filterDotfiles, isDotfileId } from './lib/tree'
 import type { AppProps } from './types'
 import './App.css'
 
@@ -12,13 +14,14 @@ const DENIED_MESSAGE = "Access to that folder wasn't granted. Choose a folder to
 
 /** App shell: toolbar over a tree pane and a preview pane, or the unsupported-browser screen. */
 export default function App({ folderPickerSupported }: AppProps) {
-  const { snapshot, openWorkspace, toggle, select } = useTree()
+  const { snapshot, openWorkspace, toggle, select, setShowDotfiles } = useTree()
   const [status, setStatus] = useState('')
   const [denied, setDenied] = useState(false)
   const [focusToken, setFocusToken] = useState(0)
   const openButtonRef = useRef<HTMLButtonElement>(null)
 
-  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, selectedId } = snapshot
+  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, selectedId } = snapshot
+  const visibleRootIds = filterDotfiles(rootIds, items, showDotfiles)
 
   useEffect(() => {
     document.title = rootName === null ? 'file-browser' : `${rootName} - file-browser`
@@ -46,6 +49,11 @@ export default function App({ folderPickerSupported }: AppProps) {
     setStatus(`Previewing ${items[id].name}`)
   }
 
+  function handleToggleDotfiles() {
+    if (showDotfiles && selectedId !== null && isDotfileId(selectedId)) setStatus('Selection cleared')
+    setShowDotfiles(!showDotfiles)
+  }
+
   return (
     <div className="shell">
       <h1 className="visually-hidden">file-browser</h1>
@@ -60,6 +68,7 @@ export default function App({ folderPickerSupported }: AppProps) {
         <span className="shell__folder-name" title={rootName ?? undefined}>
           {rootName}
         </span>
+        <HiddenFilesToggle shown={showDotfiles} onToggle={handleToggleDotfiles} />
         {denied && (
           <p className="shell__alert" role="alert">
             {DENIED_MESSAGE}
@@ -67,7 +76,7 @@ export default function App({ folderPickerSupported }: AppProps) {
         )}
       </header>
       <div className="shell__tree">
-        {rootIds.length > 0 && (
+        {visibleRootIds.length > 0 && (
           <Tree
             key={focusToken}
             items={items}
@@ -76,6 +85,7 @@ export default function App({ folderPickerSupported }: AppProps) {
             expandedIds={expandedIds}
             loadingIds={loadingIds}
             unavailableIds={unavailableIds}
+            showDotfiles={showDotfiles}
             onToggle={toggle}
             onSelect={handleSelect}
             selectedId={selectedId}
@@ -90,6 +100,11 @@ export default function App({ folderPickerSupported }: AppProps) {
           <div className="prompt">
             <h2 className="prompt__title">This folder is empty.</h2>
             <p className="prompt__body">There are no files here to show.</p>
+          </div>
+        ) : visibleRootIds.length === 0 ? (
+          <div className="prompt">
+            <h2 className="prompt__title">Nothing to show.</h2>
+            <p className="prompt__body">Hidden files are turned off.</p>
           </div>
         ) : (
           <div className="prompt">

@@ -92,6 +92,49 @@ export function Warning() {
   )
 }
 
+/** Open eye: hidden files are shown. Decorative. */
+export function Eye() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" />
+      <circle cx="8" cy="8" r="2" />
+    </svg>
+  )
+}
+
+/** Crossed-out eye: hidden files are hidden. Decorative. */
+export function EyeSlash() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" />
+      <circle cx="8" cy="8" r="2" />
+      <path d="M2.5 13.5l11-11" />
+    </svg>
+  )
+}
+
 /** A 16px inline-SVG kind glyph; decorative, so hidden from assistive technology. */
 export default function Glyph({ kind }: GlyphProps) {
   return (

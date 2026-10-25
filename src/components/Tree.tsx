@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
-import { findTypeAhead, PLACEHOLDER_PREFIX, pageStep, parentId, placeholderKey, visibleRows } from '../lib/tree'
+import {
+  filterDotfiles,
+  findTypeAhead,
+  isDotfileId,
+  PLACEHOLDER_PREFIX,
+  pageStep,
+  parentId,
+  placeholderKey,
+  previousVisibleKey,
+  visibleRows,
+} from '../lib/tree'
 import type { TreeProps } from '../types'
 import TreeNode, { TreePlaceholder, UNAVAILABLE_DESCRIPTION, UNAVAILABLE_DESCRIPTION_ID } from './TreeNode'
 
@@ -23,6 +33,7 @@ export default function Tree({
   expandedIds,
   loadingIds,
   unavailableIds,
+  showDotfiles,
   onToggle,
   onSelect,
   selectedId,
@@ -30,6 +41,8 @@ export default function Tree({
 }: TreeProps) {
   const listRef = useRef<HTMLUListElement>(null)
   const [focusedKey, setFocusedKey] = useState<string | null>(null)
+  /** Row keys as last rendered while the focused row was still visible (or nothing was focused). */
+  const [lastKeys, setLastKeys] = useState<readonly string[]>([])
   const typeAhead = useRef({ query: '', time: 0 })
 
   useEffect(() => {
@@ -37,13 +50,22 @@ export default function Tree({
     listRef.current?.querySelector<HTMLElement>('[role="treeitem"]')?.focus()
   }, [focusToken])
 
-  const rows = visibleRows(items, rootIds, childIds, expandedIds, loadingIds, unavailableIds)
+  const rows = visibleRows(items, rootIds, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles)
   const visibleKeys = new Set(rows.map((row) => row.key))
 
-  /** Finds the last focused row, or its nearest ancestor that is still visible. */
+  // Remember the row order for as long as the focused row is visible, so that when it is
+  // removed (e.g. hidden) we can still find the row that was before it.
+  if (focusedKey === null || visibleKeys.has(focusedKey)) {
+    const keys = rows.map((row) => row.key)
+    if (keys.length !== lastKeys.length || keys.some((key, i) => key !== lastKeys[i])) setLastKeys(keys)
+  }
+
+  /** Finds the last focused row, else the nearest row before it that is still visible, else its nearest visible ancestor. */
   const survivingKey = (key: string | null): string | null => {
     if (key === null) return null
     if (visibleKeys.has(key)) return key
+    const previous = previousVisibleKey(lastKeys, key, visibleKeys)
+    if (previous !== null) return previous
     let id = key.startsWith(PLACEHOLDER_PREFIX) ? key.slice(PLACEHOLDER_PREFIX.length) : parentId(key)
     while (id !== '') {
       if (visibleKeys.has(id)) return id
@@ -137,8 +159,9 @@ export default function Tree({
     event.preventDefault()
   }
 
-  const renderRows = (ids: readonly string[], level: number): ReactNode =>
-    ids.map((id, index) => {
+  const renderRows = (allIds: readonly string[], level: number): ReactNode => {
+    const ids = filterDotfiles(allIds, items, showDotfiles)
+    return ids.map((id, index) => {
       const item = items[id]
       const expanded = item.isDirectory && expandedIds.has(id)
       const loading = item.isDirectory && loadingIds.has(id)
@@ -158,7 +181,9 @@ export default function Tree({
         )
         if (loading) children = placeholder('Loading...')
         else if (unavailable) children = placeholder("This folder can't be read.")
-        else if (childList?.length === 0) children = placeholder('Empty folder')
+        else if (childList && filterDotfiles(childList, items, showDotfiles).length === 0) {
+          children = placeholder(childList.length === 0 ? 'Empty folder' : 'No visible files')
+        }
         else if (childList) children = renderRows(childList, level + 1)
       }
       return (
@@ -174,6 +199,7 @@ export default function Tree({
           expanded={expanded}
           loading={loading}
           unavailable={unavailable}
+          dotfile={isDotfileId(id)}
           onToggle={onToggle}
           onSelect={onSelect}
         >
@@ -181,6 +207,7 @@ export default function Tree({
         </TreeNode>
       )
     })
+  }
 
   return (
     <>
