@@ -1,160 +1,129 @@
 import { useEffect, useRef, useState } from 'react'
-import { FileRow } from './components/FileRow'
-import { PdfPreview } from './components/PdfPreview'
-import { isPdf } from './lib/pdf'
-import { isFolderPickerSupported, pickFolder, revokeItemUrls } from './services/directory'
-import type { FileItem } from './types'
+import Glyph from './components/Glyph'
+import HiddenFilesToggle from './components/HiddenFilesToggle'
+import OpenFolderPrompt from './components/OpenFolderPrompt'
+import PaneDivider from './components/PaneDivider'
+import Tree from './components/Tree'
+import UnsupportedBrowser from './components/UnsupportedBrowser'
+import { usePaneWidth } from './hooks/usePaneWidth'
+import { useTree } from './hooks/useTree'
+import { filterDotfiles, isDotfileId } from './lib/tree'
+import type { AppProps } from './types'
 import './App.css'
 
-/**
- * Sample data until the app reads a real directory. Covers every category.
- * Dates use the local-time constructor (month is 0-based) so they don't shift a
- * day for viewers west of UTC, as `new Date('2026-10-12')` would.
- */
-const MOCK_FILES: FileItem[] = [
-  {
-    id: '1',
-    name: 'documents',
-    path: '/documents',
-    size: 0,
-    isDirectory: true,
-    updatedAt: new Date(2026, 9, 12),
-    category: 'other',
-  },
-  {
-    id: '2',
-    name: 'report.pdf',
-    path: '/report.pdf',
-    url: '/sample.pdf',
-    size: 1048576,
-    isDirectory: false,
-    updatedAt: new Date(2026, 9, 15),
-    category: 'document',
-  },
-  {
-    id: '3',
-    name: 'vacation.jpg',
-    path: '/vacation.jpg',
-    size: 3460300,
-    isDirectory: false,
-    updatedAt: new Date(2026, 8, 2),
-    category: 'image',
-  },
-  {
-    id: '4',
-    name: 'demo-recording.mp4',
-    path: '/demo-recording.mp4',
-    size: 734003200,
-    isDirectory: false,
-    updatedAt: new Date(2026, 9, 3),
-    category: 'video',
-  },
-  {
-    id: '5',
-    name: 'podcast-episode-12.mp3',
-    path: '/podcast-episode-12.mp3',
-    size: 48234496,
-    isDirectory: false,
-    updatedAt: new Date(2026, 6, 30),
-    category: 'audio',
-  },
-  {
-    id: '6',
-    name: 'backup.zip',
-    path: '/backup.zip',
-    size: 15032385536,
-    isDirectory: false,
-    updatedAt: new Date(2026, 7, 21),
-    category: 'archive',
-  },
-  {
-    id: '7',
-    name: 'App.tsx',
-    path: '/App.tsx',
-    size: 12400,
-    isDirectory: false,
-    updatedAt: new Date(2026, 9, 18),
-    category: 'code',
-  },
-  {
-    id: '8',
-    name: 'notes.txt',
-    path: '/notes.txt',
-    size: 842,
-    isDirectory: false,
-    updatedAt: new Date(2026, 9, 17),
-    category: 'document',
-  },
-  {
-    id: '9',
-    name: 'LICENSE',
-    path: '/LICENSE',
-    size: 1071,
-    isDirectory: false,
-    updatedAt: new Date(2026, 0, 5),
-    category: 'other',
-  },
-]
+/** Shown when the picker rejects for any reason other than the user cancelling. */
+const DENIED_MESSAGE = "Access to that folder wasn't granted. Choose a folder to try again."
 
-function App() {
-  const [files, setFiles] = useState<FileItem[]>(MOCK_FILES)
-  const [folderName, setFolderName] = useState<string | null>(null)
-  const [selected, setSelected] = useState<FileItem | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  // The items whose blob URLs are live, so they can be released on change/unmount.
-  const openedItems = useRef<FileItem[]>([])
-  const pickerSupported = isFolderPickerSupported()
+/** App shell: toolbar over a tree pane and a preview pane, or the unsupported-browser screen. */
+export default function App({ folderPickerSupported }: AppProps) {
+  const { snapshot, openWorkspace, toggle, select, setShowDotfiles } = useTree()
+  const [status, setStatus] = useState('')
+  const [denied, setDenied] = useState(false)
+  const [focusToken, setFocusToken] = useState(0)
+  const openButtonRef = useRef<HTMLButtonElement>(null)
+  const pane = usePaneWidth()
 
-  useEffect(() => () => revokeItemUrls(openedItems.current), [])
+  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, selectedId } = snapshot
+  const visibleRootIds = filterDotfiles(rootIds, items, showDotfiles)
 
-  async function handleOpenFolder() {
-    setError(null)
-    try {
-      const folder = await pickFolder()
-      if (!folder) return
-      revokeItemUrls(openedItems.current)
-      openedItems.current = folder.items
-      setFiles(folder.items)
-      setFolderName(folder.name)
-      setSelected(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not open the folder')
+  useEffect(() => {
+    document.title = rootName === null ? 'file-browser' : `${rootName} - file-browser`
+  }, [rootName])
+
+  if (!folderPickerSupported) return <UnsupportedBrowser />
+
+  async function handleOpen() {
+    setDenied(false)
+    setStatus('')
+    const outcome = await openWorkspace()
+    if (outcome.status === 'opened') {
+      setStatus(`Opened ${outcome.name}`)
+      if (outcome.count > 0) setFocusToken((token) => token + 1)
+      else openButtonRef.current?.focus()
+      return
     }
+    if (outcome.status === 'denied') setDenied(true)
+    openButtonRef.current?.focus()
+  }
+
+  function handleSelect(id: string) {
+    if (id === selectedId) return
+    select(id)
+    setStatus(`Previewing ${items[id].name}`)
+  }
+
+  function handleToggleDotfiles() {
+    if (showDotfiles && selectedId !== null && isDotfileId(selectedId)) setStatus('Selection cleared')
+    setShowDotfiles(!showDotfiles)
   }
 
   return (
-    <main className="file-browser">
-      <h1>File Browser</h1>
-      <div className="toolbar">
-        <button type="button" onClick={handleOpenFolder} disabled={!pickerSupported}>
+    <div className="shell">
+      <h1 className="visually-hidden">file-browser</h1>
+      <div className="visually-hidden" role="status">
+        {status}
+      </div>
+      <header className="shell__toolbar">
+        <button ref={openButtonRef} type="button" className="button" onClick={handleOpen}>
+          <Glyph kind="folder" />
           Open folder
         </button>
-        <span className="toolbar-path">{folderName ? `${folderName}/` : 'Sample files'}</span>
-      </div>
-      {!pickerSupported && (
-        <p className="notice" role="status">
-          Opening a folder needs a Chromium browser such as Chrome or Edge.
-        </p>
-      )}
-      {error && (
-        <p className="notice" role="alert">
-          {error}
-        </p>
-      )}
-      <ul className="file-list" role="listbox" aria-label="Files">
-        {files.map((file) => (
-          <FileRow
-            key={file.id}
-            item={file}
-            selected={file.id === selected?.id}
-            onSelect={setSelected}
+        <span className="shell__folder-name" title={rootName ?? undefined}>
+          {rootName}
+        </span>
+        <HiddenFilesToggle shown={showDotfiles} onToggle={handleToggleDotfiles} />
+        {denied && (
+          <p className="shell__alert" role="alert">
+            {DENIED_MESSAGE}
+          </p>
+        )}
+      </header>
+      <div id="tree-pane" className="shell__tree">
+        {visibleRootIds.length > 0 && (
+          <Tree
+            key={focusToken}
+            items={items}
+            rootIds={rootIds}
+            childIds={childIds}
+            expandedIds={expandedIds}
+            loadingIds={loadingIds}
+            unavailableIds={unavailableIds}
+            showDotfiles={showDotfiles}
+            onToggle={toggle}
+            onSelect={handleSelect}
+            selectedId={selectedId}
+            focusToken={focusToken}
           />
-        ))}
-      </ul>
-      {files.length === 0 && <p className="notice">This folder is empty.</p>}
-      {selected && isPdf(selected) && <PdfPreview item={selected} />}
-    </main>
+        )}
+      </div>
+      <PaneDivider
+        width={pane.width}
+        min={pane.min}
+        max={pane.max}
+        controls="tree-pane"
+        onChange={pane.setWidth}
+        onReset={pane.reset}
+      />
+      <main className="shell__preview">
+        {rootName === null ? (
+          <OpenFolderPrompt onOpen={handleOpen} />
+        ) : rootIds.length === 0 ? (
+          <div className="prompt">
+            <h2 className="prompt__title">This folder is empty.</h2>
+            <p className="prompt__body">There are no files here to show.</p>
+          </div>
+        ) : visibleRootIds.length === 0 ? (
+          <div className="prompt">
+            <h2 className="prompt__title">Nothing to show.</h2>
+            <p className="prompt__body">Hidden files are turned off.</p>
+          </div>
+        ) : (
+          <div className="prompt">
+            <h2 className="prompt__title">Select a file to preview it.</h2>
+            <p className="prompt__body">Folders open in the tree on the left.</p>
+          </div>
+        )}
+      </main>
+    </div>
   )
 }
-
-export default App
