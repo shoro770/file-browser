@@ -172,6 +172,22 @@ export interface HiddenFilesToggleProps {
   onToggle: () => void
 }
 
+/** Props for the `PaneDivider` component. */
+export interface PaneDividerProps {
+  /** Current tree pane width in pixels. */
+  width: number
+  /** Smallest allowed width in pixels. */
+  min: number
+  /** Largest allowed width in pixels. */
+  max: number
+  /** Id of the pane the divider resizes. */
+  controls: string
+  /** Called with a requested width; the owner clamps it. */
+  onChange: (width: number) => void
+  /** Called to return to the default width. */
+  onReset: () => void
+}
+
 /** Props for the `OpenFolderPrompt` component. */
 export interface OpenFolderPromptProps {
   /** Called when the user activates Open folder. */

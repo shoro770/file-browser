@@ -1,6 +1,6 @@
 .shell {
   display: grid;
-  grid-template-columns: var(--size-tree-width-default) minmax(0, 1fr);
+  grid-template-columns: var(--tree-width, var(--size-tree-width-default)) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   height: 100%;
 }
@@ -25,6 +25,8 @@
 }
 
 .shell__preview {
+  grid-row: 2;
+  grid-column: 2;
   overflow: auto;
   min-width: 0;
   background: var(--color-bg);
@@ -262,4 +264,60 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.divider {
+  grid-row: 2;
+  grid-column: 2;
+  z-index: 1;
+  position: relative;
+  justify-self: start;
+  align-self: stretch;
+  width: var(--size-divider-hit);
+  margin-inline-start: -1px;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.divider__grip {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 0;
+  width: 3px;
+  height: 32px;
+  margin-block-start: -16px;
+  background: var(--color-border-strong);
+}
+
+.divider:hover::before,
+.divider:hover .divider__grip,
+.divider.is-dragging::before,
+.divider.is-dragging .divider__grip {
+  background: var(--color-accent);
+}
+
+.divider:focus-visible .divider__grip {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+  .divider::before,
+  .divider__grip,
+  .divider:hover::before,
+  .divider:hover .divider__grip,
+  .divider.is-dragging::before,
+  .divider.is-dragging .divider__grip {
+    background: CanvasText;
+  }
 }

@@ -22,3 +22,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-7-hide-and-show-dotfiles.md`
   summary: Add component tests for the Hidden files toggle (name, `aria-pressed`, description), the "No visible files" vs "Empty folder" label, the "Nothing to show." pane, the "Selection cleared" announcement and focus moving off a hidden row, once a DOM test environment exists.
   evidence: Always labelling "Empty folder", dropping the `isDotfileId` guard in `App.handleToggleDotfiles`, or breaking the `lastKeys` hand-off passes build, lint and `npm test` because only `lib/` and the store are tested (unverified medium); extends the Story 1.2 to 1.6 component-test entries.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-8-resize-the-panes.md`
+  summary: Add component and hook tests for `PaneDivider` (ARIA attributes, key dispatch, drag offset, drag-end events) and `usePaneWidth` (window-resize re-clamp and `aria-valuemax`), once a DOM test environment exists.
+  evidence: Deleting the `resize` listener, the grab offset or `onLostPointerCapture` passes build, lint and `npm test` because only `lib/layout` is tested (unverified medium); extends the Story 1.2 to 1.7 component-test entries.

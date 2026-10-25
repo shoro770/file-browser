@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import Glyph from './components/Glyph'
 import HiddenFilesToggle from './components/HiddenFilesToggle'
 import OpenFolderPrompt from './components/OpenFolderPrompt'
+import PaneDivider from './components/PaneDivider'
 import Tree from './components/Tree'
 import UnsupportedBrowser from './components/UnsupportedBrowser'
+import { usePaneWidth } from './hooks/usePaneWidth'
 import { useTree } from './hooks/useTree'
 import { filterDotfiles, isDotfileId } from './lib/tree'
 import type { AppProps } from './types'
@@ -19,6 +21,7 @@ export default function App({ folderPickerSupported }: AppProps) {
   const [denied, setDenied] = useState(false)
   const [focusToken, setFocusToken] = useState(0)
   const openButtonRef = useRef<HTMLButtonElement>(null)
+  const pane = usePaneWidth()
 
   const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, selectedId } = snapshot
   const visibleRootIds = filterDotfiles(rootIds, items, showDotfiles)
@@ -75,7 +78,7 @@ export default function App({ folderPickerSupported }: AppProps) {
           </p>
         )}
       </header>
-      <div className="shell__tree">
+      <div id="tree-pane" className="shell__tree">
         {visibleRootIds.length > 0 && (
           <Tree
             key={focusToken}
@@ -93,6 +96,14 @@ export default function App({ folderPickerSupported }: AppProps) {
           />
         )}
       </div>
+      <PaneDivider
+        width={pane.width}
+        min={pane.min}
+        max={pane.max}
+        controls="tree-pane"
+        onChange={pane.setWidth}
+        onReset={pane.reset}
+      />
       <main className="shell__preview">
         {rootName === null ? (
           <OpenFolderPrompt onOpen={handleOpen} />
