@@ -25,6 +25,67 @@ describe('createPreviewSessions', () => {
     expect(state.source.signal.aborted).toBe(false)
   })
 
+  it('reads the text of a small text file without truncating', async () => {
+    const sessions = createPreviewSessions(async () => file('a.ts', 'let x = 1'))
+    const state = await sessions.open('a.ts', 'a.ts')
+    expect(state?.status === 'ready' && state.source.text).toEqual({ text: 'let x = 1', truncated: false, totalSize: 9 })
+  })
+
+  it('discards a stale text read (latest wins for text files)', async () => {
+    const { reader, pending } = controllableReader()
+    const sessions = createPreviewSessions(reader)
+    const first = sessions.open('a.txt', 'a.txt')
+    const second = sessions.open('b.txt', 'b.txt')
+    pending.get('b.txt')!.resolve(file('b.txt', 'bee'))
+    pending.get('a.txt')!.resolve(file('a.txt', 'ay'))
+
+    expect(await first).toBeNull()
+    const state = await second
+    expect(state?.status === 'ready' && state.source.text?.text).toBe('bee')
+  })
+
+  it('reads a file of exactly 1 MB whole', async () => {
+    const sessions = createPreviewSessions(async () => file('a.log', 'a'.repeat(1_048_576)))
+    const state = await sessions.open('a.log', 'a.log')
+    expect(state?.status === 'ready' && state.source.text?.truncated).toBe(false)
+    expect(state?.status === 'ready' && state.source.text?.text.length).toBe(1_048_576)
+  })
+
+  it('keeps only the leading 1 MB of a larger file and drops a cut character', async () => {
+    const content = 'a'.repeat(1_048_575) + 'é' + 'tail' // the two bytes of é straddle the limit
+    const sessions = createPreviewSessions(async () => file('big.log', content))
+    const state = await sessions.open('big.log', 'big.log')
+    if (state?.status !== 'ready' || !state.source.text) throw new Error('expected text')
+    expect(state.source.text.truncated).toBe(true)
+    expect(state.source.text.totalSize).toBe(1_048_575 + 2 + 4)
+    expect(state.source.text.text).toBe('a'.repeat(1_048_575))
+  })
+
+  it('shows markup in a text file literally', async () => {
+    const sessions = createPreviewSessions(async () => file('x.txt', '<script>alert(1)</script>'))
+    const state = await sessions.open('x.txt', 'x.txt')
+    expect(state?.status === 'ready' && state.source.text?.text).toBe('<script>alert(1)</script>')
+  })
+
+  it('decodes invalid UTF-8 with replacement characters', async () => {
+    const sessions = createPreviewSessions(async () => new File([new Uint8Array([0x61, 0xff, 0x00])], 'b.txt'))
+    const state = await sessions.open('b.txt', 'b.txt')
+    expect(state?.status === 'ready' && state.source.text?.text).toBe('a�\u0000')
+  })
+
+  it('does not read text for non-text kinds', async () => {
+    const sessions = createPreviewSessions(async () => file('a.pdf', 'x', 'application/pdf'))
+    const state = await sessions.open('a.pdf', 'a.pdf')
+    expect(state?.status === 'ready' && state.source.text).toBeUndefined()
+  })
+
+  it('turns a failed text read into a typed outcome', async () => {
+    const broken = file('a.txt', 'hi')
+    Object.defineProperty(broken, 'slice', { value: () => ({ arrayBuffer: () => Promise.reject(new Error('gone')) }) })
+    const sessions = createPreviewSessions(async () => broken)
+    expect(await sessions.open('a.txt', 'a.txt')).toEqual({ status: 'failed', id: 'a.txt', name: 'a.txt' })
+  })
+
   it('resolves a zero-byte file to metadata', async () => {
     const sessions = createPreviewSessions(async () => file('a.txt', ''))
     const state = await sessions.open('a.txt', 'a.txt')

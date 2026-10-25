@@ -188,6 +188,59 @@
   padding: var(--space-6) var(--space-4);
 }
 
+/* The header sticks to the top of the scrolling region; the banner sticks below it. */
+.preview {
+  --preview-header-height: 3rem;
+}
+
+.preview-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  height: var(--preview-header-height);
+}
+
+.text-preview {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100% - var(--preview-header-height));
+}
+
+.text-preview__content {
+  box-sizing: border-box;
+  flex: 1;
+  margin: 0;
+  padding: var(--space-4);
+  background: var(--color-code-bg);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: var(--font-size-label);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  tab-size: 4;
+  white-space: pre-wrap;
+}
+
+.truncation-banner {
+  position: sticky;
+  top: var(--preview-header-height);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-notice-bg);
+  border-block-end: 1px solid var(--color-notice-border);
+  color: var(--color-notice-text);
+  font-size: var(--font-size-caption);
+}
+
+.truncation-banner__glyph {
+  flex: none;
+}
+
 .preview__loading {
   margin: 0;
   padding: var(--space-2) var(--space-4);

@@ -210,9 +210,21 @@ export interface PreviewMeta {
   kind: PreviewKind
 }
 
+/** Leading text of a `text` file, read by the preview session. */
+export interface TextContent {
+  /** Decoded text, at most the first 1 MB. */
+  text: string
+  /** Whether the file is larger than what `text` holds. */
+  truncated: boolean
+  /** Full size of the file in bytes. */
+  totalSize: number
+}
+
 /** What a renderer receives: the file contents, a cancellation signal and resolved details. Never a handle. */
 export interface PreviewSource {
   file: File
+  /** Leading text, set only for the `text` kind. */
+  text?: TextContent
   /** Aborted when a newer selection replaces this one. */
   signal: AbortSignal
   meta: PreviewMeta
@@ -223,6 +235,11 @@ export type PreviewState =
   | { status: 'idle' }
   | { status: 'ready'; id: string; source: PreviewSource }
   | { status: 'failed'; id: string; name: string }
+
+/** Props for the `TextPreview` component. */
+export interface TextPreviewProps {
+  source: PreviewSource
+}
 
 /** Props for the `PreviewPane` component. */
 export interface PreviewPaneProps {

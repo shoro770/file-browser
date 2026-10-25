@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import type { PreviewPaneProps } from '../types'
 import MetadataCard from './MetadataCard'
 import PreviewHeader from './PreviewHeader'
+import TextPreview from './preview/TextPreview'
 
 /** Id of the header `h2` that names the preview region. */
 const TITLE_ID = 'preview-title'
@@ -13,8 +14,10 @@ const TITLE_ID = 'preview-title'
  */
 export default function PreviewPane({ state, now, loading, onAnnounce }: PreviewPaneProps) {
   useEffect(() => {
-    if (state.status === 'ready') onAnnounce(`${state.source.meta.name}: no preview available`)
-    else if (state.status === 'failed') onAnnounce(`${state.name}: no preview available`)
+    // Text previews are announced on activation only ("Previewing {name}"); cards get the no-preview text.
+    if (state.status === 'ready') {
+      if (state.source.meta.kind !== 'text' || !state.source.text) onAnnounce(`${state.source.meta.name}: no preview available`)
+    } else if (state.status === 'failed') onAnnounce(`${state.name}: no preview available`)
   }, [state, onAnnounce])
 
   const named = state.status === 'ready'
@@ -29,9 +32,13 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
       {state.status === 'ready' && (
         <>
           <PreviewHeader meta={state.source.meta} titleId={TITLE_ID} now={now} />
-          <div className="preview__body">
-            <MetadataCard meta={state.source.meta} name={state.source.meta.name} now={now} />
-          </div>
+          {state.source.meta.kind === 'text' && state.source.text ? (
+            <TextPreview source={state.source} />
+          ) : (
+            <div className="preview__body">
+              <MetadataCard meta={state.source.meta} name={state.source.meta.name} now={now} />
+            </div>
+          )}
         </>
       )}
       {state.status === 'failed' && (

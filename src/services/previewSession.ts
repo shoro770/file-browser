@@ -6,11 +6,25 @@
  */
 
 import { resolvePreviewKind } from '../lib/preview'
-import type { PreviewState } from '../types'
+import { MAX_TEXT_BYTES, trimPartialUtf8 } from '../lib/text'
+import type { PreviewKind, PreviewState, TextContent } from '../types'
 import { readItemFile } from './tree'
 
 /** Reads the `File` for an item id. */
 export type FileReader = (id: string) => Promise<File>
+
+/**
+ * Reads and decodes the leading 1 MB of a file. Only a slice is read.
+ *
+ * @param file - The file to read.
+ * @returns The decoded text and whether the file was cut.
+ */
+async function readLeadingText(file: File): Promise<TextContent> {
+  const bytes = new Uint8Array(await file.slice(0, MAX_TEXT_BYTES).arrayBuffer())
+  const truncated = file.size > MAX_TEXT_BYTES
+  const text = new TextDecoder('utf-8').decode(truncated ? trimPartialUtf8(bytes) : bytes)
+  return { text, truncated, totalSize: file.size }
+}
 
 /** Opens preview sessions over a file reader. */
 export interface PreviewSessions {
@@ -42,8 +56,13 @@ export function createPreviewSessions(read: FileReader): PreviewSessions {
       current = controller
 
       let file: File
+      let kind: PreviewKind
+      let text: TextContent | undefined
       try {
         file = await read(id)
+        kind = resolvePreviewKind(name, file.type, file.size)
+        if (controller.signal.aborted) return null
+        if (kind === 'text') text = await readLeadingText(file)
       } catch {
         return controller.signal.aborted ? null : { status: 'failed', id, name }
       }
@@ -55,13 +74,14 @@ export function createPreviewSessions(read: FileReader): PreviewSessions {
         id,
         source: {
           file,
+          ...(text && { text }),
           signal: controller.signal,
           meta: {
             name,
             size: file.size,
             updatedAt: new Date(file.lastModified),
             mime,
-            kind: resolvePreviewKind(name, mime, file.size),
+            kind,
           },
         },
       }
