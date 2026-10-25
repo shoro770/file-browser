@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { rendererFor } from '../lib/preview'
 import type { PreviewPaneProps, PreviewSource } from '../types'
 import MetadataCard from './MetadataCard'
@@ -6,6 +6,9 @@ import PreviewHeader from './PreviewHeader'
 import ImagePreview from './preview/ImagePreview'
 import PreviewBoundary from './preview/PreviewBoundary'
 import TextPreview from './preview/TextPreview'
+
+/** The Markdown renderer and its parser and sanitizer load on first use (AD-9, AD-15). */
+const MarkdownPreview = lazy(() => import('./preview/MarkdownPreview'))
 
 /** Id of the header `h2` that names the preview region. */
 const TITLE_ID = 'preview-title'
@@ -59,6 +62,12 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
           {renderer === 'text' ? (
             <PreviewBoundary key={key} onFail={fail}>
               <TextPreview source={state.source} />
+            </PreviewBoundary>
+          ) : renderer === 'markdown' ? (
+            <PreviewBoundary key={key} onFail={fail}>
+              <Suspense fallback={null}>
+                <MarkdownPreview source={state.source} />
+              </Suspense>
             </PreviewBoundary>
           ) : renderer === 'image' ? (
             <PreviewBoundary key={key} onFail={fail}>

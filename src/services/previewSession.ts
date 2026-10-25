@@ -78,7 +78,7 @@ export function createPreviewSessions(read: FileReader, urls: ObjectUrls = URL):
         file = await read(id)
         kind = resolvePreviewKind(name, file.type, file.size)
         if (controller.signal.aborted) return null
-        if (kind === 'text') text = await readLeadingText(file)
+        if (kind === 'text' || kind === 'markdown') text = await readLeadingText(file)
       } catch {
         return controller.signal.aborted ? null : { status: 'failed', id, name }
       }

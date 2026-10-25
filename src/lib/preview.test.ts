@@ -93,6 +93,12 @@ describe('rendererFor', () => {
   it('picks a renderer only when its input exists', () => {
     expect(rendererFor('text', true, false)).toBe('text')
     expect(rendererFor('image', false, true)).toBe('image')
+    expect(rendererFor('markdown', true, false)).toBe('markdown')
+  })
+
+  it('gives markdown the card without leading text', () => {
+    expect(rendererFor('markdown', false, false)).toBe('card')
+    expect(rendererFor('markdown', false, true)).toBe('card')
   })
 
   it('falls back to the card without input or for other kinds', () => {
@@ -100,7 +106,7 @@ describe('rendererFor', () => {
     expect(rendererFor('image', true, false)).toBe('card')
     expect(rendererFor('image', false, false)).toBe('card')
     expect(rendererFor('text', false, true)).toBe('card')
-    for (const kind of ['markdown', 'pdf', 'docx', 'metadata'] as const) {
+    for (const kind of ['pdf', 'docx', 'metadata'] as const) {
       expect(rendererFor(kind, true, true)).toBe('card')
     }
   })

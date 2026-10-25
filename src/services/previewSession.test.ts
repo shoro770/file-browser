@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { MAX_TEXT_BYTES } from '../lib/text'
 import { createPreviewSessions } from './previewSession'
 
 /** A reader whose promises the test settles by hand. */
@@ -71,6 +72,19 @@ describe('createPreviewSessions', () => {
     const sessions = createPreviewSessions(async () => new File([new Uint8Array([0x61, 0xff, 0x00])], 'b.txt'))
     const state = await sessions.open('b.txt', 'b.txt')
     expect(state?.status === 'ready' && state.source.text?.text).toBe('a�\u0000')
+  })
+
+  it('reads the leading text of a Markdown file, truncating at 1 MB, with no image URL', async () => {
+    const small = createPreviewSessions(async () => file('a.md', '# Hi', 'text/markdown'))
+    const ready = await small.open('a.md', 'a.md')
+    expect(ready?.status === 'ready' && ready.source.meta.kind).toBe('markdown')
+    expect(ready?.status === 'ready' && ready.source.text).toEqual({ text: '# Hi', truncated: false, totalSize: 4 })
+    expect(ready?.status === 'ready' && ready.source.imageUrl).toBeUndefined()
+
+    const big = createPreviewSessions(async () => file('b.md', 'x'.repeat(MAX_TEXT_BYTES + 5), ''))
+    const cut = await big.open('b.md', 'b.md')
+    expect(cut?.status === 'ready' && cut.source.text?.truncated).toBe(true)
+    expect(cut?.status === 'ready' && cut.source.text?.text).toHaveLength(MAX_TEXT_BYTES)
   })
 
   it('does not read text for non-text kinds', async () => {

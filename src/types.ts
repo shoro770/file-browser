@@ -238,6 +238,23 @@ export type PreviewState =
   | { status: 'ready'; id: string; source: PreviewSource }
   | { status: 'failed'; id: string; name: string }
 
+/** Options for `sanitize`. */
+export interface SanitizeOptions {
+  /** Keep inline raster `data:image/` sources. Off by default: every image becomes the blocked placeholder. */
+  allowDataImages?: boolean
+}
+
+/** Props for the `MarkdownPreview` component. */
+export interface MarkdownPreviewProps {
+  source: PreviewSource
+}
+
+/** Props for the `TruncationBanner` component. */
+export interface TruncationBannerProps {
+  /** Full size of the cut file in bytes. */
+  totalSize: number
+}
+
 /** Props for the `TextPreview` component. */
 export interface TextPreviewProps {
   source: PreviewSource

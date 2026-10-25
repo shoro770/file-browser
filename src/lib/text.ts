@@ -34,3 +34,17 @@ export function trimPartialUtf8(bytes: Uint8Array): Uint8Array {
 export function truncationNotice(totalSize: number): string {
   return `Showing the first 1 MB of ${formatSize(totalSize)}. The rest of the file isn't shown.`
 }
+
+/**
+ * Drops the partial final line of a cut text, so a construct split by the byte limit is never rendered half-formed.
+ *
+ * @param text - Decoded leading text of a file.
+ * @param truncated - Whether the file was cut at the byte limit.
+ * @returns The text unchanged when not truncated, when it holds no line break, or when cutting would leave only blank space; else the text up to and including its last line break (LF or CR).
+ */
+export function trimToLastLine(text: string, truncated: boolean): string {
+  if (!truncated) return text
+  const cut = Math.max(text.lastIndexOf('\n'), text.lastIndexOf('\r'))
+  const trimmed = cut === -1 ? text : text.slice(0, cut + 1)
+  return trimmed.trim() === '' ? text : trimmed
+}

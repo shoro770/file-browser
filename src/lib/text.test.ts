@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_TEXT_BYTES, trimPartialUtf8, truncationNotice } from './text'
+import { MAX_TEXT_BYTES, trimPartialUtf8, trimToLastLine, truncationNotice } from './text'
+
+describe('trimToLastLine', () => {
+  it('leaves untruncated text alone', () => {
+    expect(trimToLastLine('a\nb', false)).toBe('a\nb')
+  })
+
+  it('drops the partial last line of truncated text', () => {
+    expect(trimToLastLine('a\n```js\nlet x', true)).toBe('a\n```js\n')
+    expect(trimToLastLine('a\nb\n', true)).toBe('a\nb\n')
+  })
+
+  it('keeps a single unbroken line', () => {
+    expect(trimToLastLine('one long line', true)).toBe('one long line')
+  })
+
+  it('cuts at a lone CR, and never leaves only blank space', () => {
+    expect(trimToLastLine('a\rb\rpartial', true)).toBe('a\rb\r')
+    expect(trimToLastLine('\nminified-one-line', true)).toBe('\nminified-one-line')
+  })
+})
 
 const bytes = (...values: number[]) => new Uint8Array(values)
 
