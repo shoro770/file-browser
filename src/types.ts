@@ -225,6 +225,8 @@ export interface PreviewSource {
   file: File
   /** Leading text, set only for the `text` kind. */
   text?: TextContent
+  /** `blob:` URL for the `<img>`, set only for the `image` kind; revoked by the session. */
+  imageUrl?: string
   /** Aborted when a newer selection replaces this one. */
   signal: AbortSignal
   meta: PreviewMeta
@@ -238,6 +240,11 @@ export type PreviewState =
 
 /** Props for the `TextPreview` component. */
 export interface TextPreviewProps {
+  source: PreviewSource
+}
+
+/** Props for the `ImagePreview` component. */
+export interface ImagePreviewProps {
   source: PreviewSource
 }
 

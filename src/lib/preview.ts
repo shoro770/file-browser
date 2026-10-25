@@ -109,6 +109,46 @@ export function isPdfName(name: string): boolean {
 }
 
 /**
+ * Chooses what the Preview Pane draws for a ready source. The dispatcher and the
+ * "no preview available" announcement both use it, so they cannot disagree.
+ *
+ * @param kind - Resolved preview kind.
+ * @param hasText - Whether the session read leading text.
+ * @param hasImageUrl - Whether the session created an object URL.
+ * @returns `text` or `image` when that renderer has what it needs, else `card`.
+ */
+export function rendererFor(kind: PreviewKind, hasText: boolean, hasImageUrl: boolean): 'text' | 'image' | 'card' {
+  if (kind === 'text' && hasText) return 'text'
+  if (kind === 'image' && hasImageUrl) return 'image'
+  return 'card'
+}
+
+/** Image MIME types by lower-case extension, for files whose device-reported type is empty. */
+const IMAGE_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  bmp: 'image/bmp',
+  ico: 'image/x-icon',
+}
+
+/**
+ * Picks the MIME type an image blob is given so `<img>` can decode it. No content sniffing.
+ *
+ * @param name - Base name of the file.
+ * @param mime - Device-reported `File.type`; `''` when unknown.
+ * @returns The device type when it is an `image/*` type, else the type for the extension, else `''`.
+ */
+export function imageMimeFor(name: string, mime = ''): string {
+  const type = mime.toLowerCase()
+  if (type.startsWith('image/')) return type
+  return IMAGE_MIME_BY_EXTENSION[extensionOf(name)] ?? ''
+}
+
+/**
  * Chooses the kind glyph for a file from the resolver and the EXPERIENCE.md map, so the
  * tree and the Metadata Card agree.
  *

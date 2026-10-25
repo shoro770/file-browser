@@ -1,11 +1,12 @@
 /**
  * Selection-scoped preview sessions. Each session owns one `AbortController` and the
  * `File` read; opening a new one aborts the previous, so the latest selection wins and
- * a late result is discarded. Object URLs, once renderers need them, are created and
- * revoked here and nowhere else.
+ * a late result is discarded. Object URLs are created and revoked here and nowhere else:
+ * a new session (or `close()`) revokes the previous session's URL at once, and the
+ * `<img>` on screen keeps its decoded bitmap.
  */
 
-import { resolvePreviewKind } from '../lib/preview'
+import { imageMimeFor, resolvePreviewKind } from '../lib/preview'
 import { MAX_TEXT_BYTES, trimPartialUtf8 } from '../lib/text'
 import type { PreviewKind, PreviewState, TextContent } from '../types'
 import { readItemFile } from './tree'
@@ -24,6 +25,12 @@ async function readLeadingText(file: File): Promise<TextContent> {
   const truncated = file.size > MAX_TEXT_BYTES
   const text = new TextDecoder('utf-8').decode(truncated ? trimPartialUtf8(bytes) : bytes)
   return { text, truncated, totalSize: file.size }
+}
+
+/** The object URL functions a session uses; `URL` in the app, a fake in tests. */
+export interface ObjectUrls {
+  createObjectURL(blob: Blob): string
+  revokeObjectURL(url: string): void
 }
 
 /** Opens preview sessions over a file reader. */
@@ -46,12 +53,21 @@ export interface PreviewSessions {
  * @param read - How to read an item's `File`.
  * @returns The manager.
  */
-export function createPreviewSessions(read: FileReader): PreviewSessions {
+export function createPreviewSessions(read: FileReader, urls: ObjectUrls = URL): PreviewSessions {
   let current: AbortController | null = null
+  let currentUrl: string | null = null
+
+  /** Aborts the current session and revokes the object URL it owns. */
+  function end(): void {
+    current?.abort()
+    if (currentUrl !== null) urls.revokeObjectURL(currentUrl)
+    current = null
+    currentUrl = null
+  }
 
   return {
     async open(id, name) {
-      current?.abort()
+      end()
       const controller = new AbortController()
       current = controller
 
@@ -68,6 +84,17 @@ export function createPreviewSessions(read: FileReader): PreviewSessions {
       }
       if (controller.signal.aborted) return null
 
+      // Created here, after the last await, so a superseded session never owns a URL.
+      let imageUrl: string | undefined
+      if (kind === 'image') {
+        try {
+          imageUrl = urls.createObjectURL(file.slice(0, file.size, imageMimeFor(name, file.type)))
+        } catch {
+          return { status: 'failed', id, name }
+        }
+        currentUrl = imageUrl
+      }
+
       const mime = file.type
       return {
         status: 'ready',
@@ -75,6 +102,7 @@ export function createPreviewSessions(read: FileReader): PreviewSessions {
         source: {
           file,
           ...(text && { text }),
+          ...(imageUrl && { imageUrl }),
           signal: controller.signal,
           meta: {
             name,
@@ -86,10 +114,7 @@ export function createPreviewSessions(read: FileReader): PreviewSessions {
         },
       }
     },
-    close() {
-      current?.abort()
-      current = null
-    },
+    close: end,
   }
 }
 

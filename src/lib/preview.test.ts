@@ -6,7 +6,9 @@ import {
   cardExplanation,
   extensionOf,
   glyphForFile,
+  imageMimeFor,
   isPdfName,
+  rendererFor,
   resolvePreviewKind,
   typeLabel,
 } from './preview'
@@ -83,6 +85,41 @@ describe('resolvePreviewKind', () => {
 
   it('does not trip on names that match Object.prototype keys', () => {
     expect(resolvePreviewKind('x.constructor')).toBe('metadata')
+  })
+})
+
+describe('rendererFor', () => {
+  it('picks a renderer only when its input exists', () => {
+    expect(rendererFor('text', true, false)).toBe('text')
+    expect(rendererFor('image', false, true)).toBe('image')
+  })
+
+  it('falls back to the card without input or for other kinds', () => {
+    expect(rendererFor('text', false, false)).toBe('card')
+    expect(rendererFor('image', true, false)).toBe('card')
+    expect(rendererFor('image', false, false)).toBe('card')
+    expect(rendererFor('text', false, true)).toBe('card')
+    for (const kind of ['markdown', 'pdf', 'docx', 'metadata'] as const) {
+      expect(rendererFor(kind, true, true)).toBe('card')
+    }
+  })
+})
+
+describe('imageMimeFor', () => {
+  it('keeps a device-reported image type', () => {
+    expect(imageMimeFor('a.png', 'image/png')).toBe('image/png')
+    expect(imageMimeFor('a.svg', 'IMAGE/SVG+XML')).toBe('image/svg+xml')
+  })
+
+  it('falls back to the extension when the type is empty or not an image type', () => {
+    expect(imageMimeFor('x.svg')).toBe('image/svg+xml')
+    expect(imageMimeFor('x.PNG')).toBe('image/png')
+    expect(imageMimeFor('x.jpg', 'application/octet-stream')).toBe('image/jpeg')
+  })
+
+  it('returns an empty type for an unknown extension', () => {
+    expect(imageMimeFor('x.heic')).toBe('')
+    expect(imageMimeFor('noext')).toBe('')
   })
 })
 
