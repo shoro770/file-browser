@@ -48,7 +48,7 @@ development_status:
 
   epic-2: in-progress
   2-1-see-a-selected-file-s-details: done
-  2-2-preview-text-files: review
+  2-2-preview-text-files: done
   2-3-preview-images: backlog
   2-4-failed-previews-degrade-gracefully: backlog
   epic-2-retrospective: optional
