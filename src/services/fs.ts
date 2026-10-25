@@ -86,6 +86,19 @@ export function openChildDirectory(parent: WorkspaceHandle, name: string): Promi
 }
 
 /**
+ * Reads a file's `File` (size, modification time, type and contents on demand).
+ *
+ * @param parent - The containing folder.
+ * @param name - Base name of the file.
+ * @returns The file.
+ * @throws If the file can't be opened or read.
+ */
+export async function readFile(parent: WorkspaceHandle, name: string): Promise<File> {
+  const handle = await parent.getFileHandle(name)
+  return handle.getFile()
+}
+
+/**
  * Reads the name of a folder handle.
  *
  * @param handle - The folder.

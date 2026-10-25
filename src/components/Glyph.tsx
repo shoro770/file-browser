@@ -136,10 +136,10 @@ export function EyeSlash() {
 }
 
 /** A 16px inline-SVG kind glyph; decorative, so hidden from assistive technology. */
-export default function Glyph({ kind }: GlyphProps) {
+export default function Glyph({ kind, large = false }: GlyphProps) {
   return (
     <svg
-      className="glyph"
+      className={large ? 'glyph glyph--large' : 'glyph'}
       width="16"
       height="16"
       viewBox="0 0 16 16"

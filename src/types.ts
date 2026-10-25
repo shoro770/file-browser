@@ -92,6 +92,8 @@ export interface VisibleRow {
 /** Props for the `Glyph` component. */
 export interface GlyphProps {
   kind: GlyphKind
+  /** Draw at 48px (the Metadata Card) instead of 16px. */
+  large?: boolean
 }
 
 /** Props for the `Tree` component. */
@@ -186,6 +188,71 @@ export interface PaneDividerProps {
   onChange: (width: number) => void
   /** Called to return to the default width. */
   onReset: () => void
+}
+
+/** Every preview kind. Source of truth for `PreviewKind`. */
+export const PREVIEW_KINDS = ['text', 'markdown', 'pdf', 'docx', 'image', 'metadata'] as const
+
+/** Which renderer a file gets, resolved from its name and device-reported type only. */
+export type PreviewKind = (typeof PREVIEW_KINDS)[number]
+
+/** Details of the selected file, read through `getFile()` for the Selection only. */
+export interface PreviewMeta {
+  /** Base name including extension. */
+  name: string
+  /** Size in bytes. */
+  size: number
+  /** Last modification time. */
+  updatedAt: Date
+  /** Device-reported MIME type; `''` when unknown. */
+  mime: string
+  /** Resolved preview kind. */
+  kind: PreviewKind
+}
+
+/** What a renderer receives: the file contents, a cancellation signal and resolved details. Never a handle. */
+export interface PreviewSource {
+  file: File
+  /** Aborted when a newer selection replaces this one. */
+  signal: AbortSignal
+  meta: PreviewMeta
+}
+
+/** Outcome of loading the selected file's details. */
+export type PreviewState =
+  | { status: 'idle' }
+  | { status: 'ready'; id: string; source: PreviewSource }
+  | { status: 'failed'; id: string; name: string }
+
+/** Props for the `PreviewPane` component. */
+export interface PreviewPaneProps {
+  /** Current preview state; the pane keeps showing the last ready file while a new one loads. */
+  state: PreviewState
+  /** When `state` arrived, for the Today/Yesterday labels. */
+  now: Date
+  /** Whether a load has run past the loading delay. */
+  loading: boolean
+  /** Called with the status text once a card outcome is shown. */
+  onAnnounce: (text: string) => void
+}
+
+/** Props for the `PreviewHeader` component. */
+export interface PreviewHeaderProps {
+  meta: PreviewMeta
+  /** Id of the `h2` holding the file name. */
+  titleId: string
+  /** Current time, for the relative stamp. */
+  now: Date
+}
+
+/** Props for the `MetadataCard` component. */
+export interface MetadataCardProps {
+  /** Details to show; `null` when the file could not be read. */
+  meta: PreviewMeta | null
+  /** File name, used when `meta` is `null`. */
+  name: string
+  /** Current time, for the relative stamp. */
+  now: Date
 }
 
 /** Props for the `OpenFolderPrompt` component. */

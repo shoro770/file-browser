@@ -3,6 +3,7 @@
  */
 
 import type { FileItem } from '../types'
+import { isPdfName } from './preview'
 
 /**
  * Tells whether a file item is a PDF, judged by its extension.
@@ -14,7 +15,7 @@ import type { FileItem } from '../types'
  * @returns `true` if the item is a regular file whose name ends in `.pdf` (case-insensitive).
  */
 export function isPdf(item: Pick<FileItem, 'name' | 'isDirectory'>): boolean {
-  return !item.isDirectory && /\.pdf$/i.test(item.name)
+  return !item.isDirectory && isPdfName(item.name)
 }
 
 /**

@@ -53,6 +53,8 @@ describe('glyphForName', () => {
     ['a.pdf', false, 'pdf'],
     ['a.docx', false, 'document'],
     ['notes.md', false, 'text'],
+    ['main.ts', false, 'text'],
+    ['data.json', false, 'text'],
     ['Makefile', false, 'text'],
     ['.env.local', false, 'text'],
     ['a.zip', false, 'binary'],

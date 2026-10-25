@@ -6,7 +6,7 @@
 
 import { isDotfileId, parentId } from '../lib/tree'
 import type { FileItem, OpenOutcome, TreeSnapshot } from '../types'
-import { handleName, listChildren, openChildDirectory, pickDirectory } from './fs'
+import { handleName, listChildren, openChildDirectory, pickDirectory, readFile } from './fs'
 import type { WorkspaceHandle } from './fs'
 import { readShowDotfiles, writeShowDotfiles } from './prefs'
 
@@ -110,6 +110,21 @@ export function select(id: string): void {
   const item = snapshot.items[id]
   if (!item || item.isDirectory || id === snapshot.selectedId) return
   publish({ ...snapshot, selectedId: id })
+}
+
+/**
+ * Reads a loaded file through its parent folder's handle, without exposing the handle.
+ * Used for the Selection only.
+ *
+ * @param id - Id of a loaded, non-directory item.
+ * @returns The file.
+ * @throws If the id is unknown, a folder, or the file can't be read.
+ */
+export function readItemFile(id: string): Promise<File> {
+  const item = snapshot.items[id]
+  const parent = handles.get(parentId(id))
+  if (!item || item.isDirectory || !parent) return Promise.reject(new Error('not a readable file'))
+  return readFile(parent, item.name)
 }
 
 /**

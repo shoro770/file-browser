@@ -19,7 +19,7 @@ vi.stubGlobal('window', {
   },
 })
 
-const { openWorkspace, getSnapshot, toggle, select, setShowDotfiles, subscribe } = await import('./tree')
+const { openWorkspace, getSnapshot, toggle, select, setShowDotfiles, subscribe, readItemFile } = await import('./tree')
 const { readShowDotfiles } = await import('./prefs')
 
 describe('openWorkspace', () => {
@@ -99,7 +99,11 @@ function fakeTree(name: string, spec: Spec, opts: { delay?: () => Promise<void>;
       if (!children[childName]) throw new Error('missing')
       return folders[path ? `${path}/${childName}` : childName]
     })
-    const handle = { name: folderName, kind: 'directory', values, getDirectoryHandle }
+    const getFileHandle = vi.fn(async (childName: string) => {
+      if (children[childName] !== null) throw new Error('missing')
+      return { getFile }
+    })
+    const handle = { name: folderName, kind: 'directory', values, getDirectoryHandle, getFileHandle }
     for (const [childName, child] of Object.entries(children)) {
       const childPath = path ? `${path}/${childName}` : childName
       if (child) folders[childPath] = make(childName, child, childPath)
@@ -558,5 +562,51 @@ describe('deterministic ids', () => {
       uuid.mockRestore()
       now.mockRestore()
     }
+  })
+})
+
+describe('readItemFile', () => {
+  beforeEach(() => {
+    picker.mockReset()
+    rejectWith = null
+    vi.useRealTimers()
+  })
+
+  async function open(spec: Spec) {
+    const t = fakeTree('r', spec)
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    return t
+  }
+
+  it('reads a top-level file through the root handle, once', async () => {
+    const t = await open({ 'a.txt': null })
+    const file = new File(['hi'], 'a.txt')
+    t.getFile.mockResolvedValue(file)
+    expect(await readItemFile('a.txt')).toBe(file)
+    expect(t.getFile).toHaveBeenCalledTimes(1)
+  })
+
+  it('reads a nested file through its expanded parent', async () => {
+    const t = await open({ src: { 'b.ts': null } })
+    await toggle('src')
+    const file = new File(['x'], 'b.ts')
+    t.getFile.mockResolvedValue(file)
+    expect(await readItemFile('src/b.ts')).toBe(file)
+    expect(t.folders['src'].getFileHandle).toHaveBeenCalledWith('b.ts')
+  })
+
+  it('rejects unknown ids, folders and files whose parent was never listed', async () => {
+    const t = await open({ src: { 'b.ts': null } })
+    await expect(readItemFile('nope.txt')).rejects.toThrow()
+    await expect(readItemFile('src')).rejects.toThrow()
+    await expect(readItemFile('src/b.ts')).rejects.toThrow()
+    expect(t.getFile).not.toHaveBeenCalled()
+  })
+
+  it('rejects when the file cannot be opened', async () => {
+    const t = await open({ 'a.txt': null })
+    t.getFile.mockRejectedValue(new DOMException('gone', 'NotFoundError'))
+    await expect(readItemFile('a.txt')).rejects.toThrow()
   })
 })

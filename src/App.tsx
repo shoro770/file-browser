@@ -3,9 +3,11 @@ import Glyph from './components/Glyph'
 import HiddenFilesToggle from './components/HiddenFilesToggle'
 import OpenFolderPrompt from './components/OpenFolderPrompt'
 import PaneDivider from './components/PaneDivider'
+import PreviewPane from './components/PreviewPane'
 import Tree from './components/Tree'
 import UnsupportedBrowser from './components/UnsupportedBrowser'
 import { usePaneWidth } from './hooks/usePaneWidth'
+import { usePreview } from './hooks/usePreview'
 import { useTree } from './hooks/useTree'
 import { filterDotfiles, isDotfileId } from './lib/tree'
 import type { AppProps } from './types'
@@ -25,6 +27,8 @@ export default function App({ folderPickerSupported }: AppProps) {
 
   const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, selectedId } = snapshot
   const visibleRootIds = filterDotfiles(rootIds, items, showDotfiles)
+  const selectedItem = selectedId === null ? null : (items[selectedId] ?? null)
+  const preview = usePreview(selectedItem)
 
   useEffect(() => {
     document.title = rootName === null ? 'file-browser' : `${rootName} - file-browser`
@@ -105,22 +109,28 @@ export default function App({ folderPickerSupported }: AppProps) {
         onReset={pane.reset}
       />
       <main className="shell__preview">
-        {rootName === null ? (
-          <OpenFolderPrompt onOpen={handleOpen} />
-        ) : rootIds.length === 0 ? (
-          <div className="prompt">
-            <h2 className="prompt__title">This folder is empty.</h2>
-            <p className="prompt__body">There are no files here to show.</p>
-          </div>
-        ) : visibleRootIds.length === 0 ? (
-          <div className="prompt">
-            <h2 className="prompt__title">Nothing to show.</h2>
-            <p className="prompt__body">Hidden files are turned off.</p>
-          </div>
+        {selectedItem !== null ? (
+          <PreviewPane state={preview.state} now={preview.now} loading={preview.loading} onAnnounce={setStatus} />
         ) : (
-          <div className="prompt">
-            <h2 className="prompt__title">Select a file to preview it.</h2>
-            <p className="prompt__body">Folders open in the tree on the left.</p>
+          <div className="preview" role="region" aria-label="Preview">
+            {rootName === null ? (
+              <OpenFolderPrompt onOpen={handleOpen} />
+            ) : rootIds.length === 0 ? (
+              <div className="prompt">
+                <h2 className="prompt__title">This folder is empty.</h2>
+                <p className="prompt__body">There are no files here to show.</p>
+              </div>
+            ) : visibleRootIds.length === 0 ? (
+              <div className="prompt">
+                <h2 className="prompt__title">Nothing to show.</h2>
+                <p className="prompt__body">Hidden files are turned off.</p>
+              </div>
+            ) : (
+              <div className="prompt">
+                <h2 className="prompt__title">Select a file to preview it.</h2>
+                <p className="prompt__body">Folders open in the tree on the left.</p>
+              </div>
+            )}
           </div>
         )}
       </main>
