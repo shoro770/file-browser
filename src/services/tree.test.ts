@@ -498,3 +498,65 @@ describe('setShowDotfiles', () => {
     expect(getSnapshot().showDotfiles).toBe(false)
   })
 })
+
+describe('deterministic ids', () => {
+  const spec: Spec = { src: { 'a.ts': null, lib: { 'b.ts': null } }, 'README.md': null }
+
+  beforeEach(() => {
+    picker.mockReset()
+    rejectWith = null
+    vi.useRealTimers()
+  })
+
+  /** Opens `spec`, expands every folder, and returns all ids and child lists. */
+  async function collect() {
+    picker.mockResolvedValue(fakeTree('r', spec).root)
+    await openWorkspace()
+    await toggle('src')
+    await toggle('src/lib')
+    const snap = getSnapshot()
+    return { rootIds: snap.rootIds, childIds: snap.childIds, itemIds: Object.keys(snap.items).sort() }
+  }
+
+  it('every id equals its path, with no extra characters', async () => {
+    const result = await collect()
+    expect(result.itemIds).toEqual(['README.md', 'src', 'src/a.ts', 'src/lib', 'src/lib/b.ts'])
+    const snap = getSnapshot()
+    for (const [id, item] of Object.entries(snap.items)) {
+      expect(item.id).toBe(id)
+      expect(item.path).toBe(`/${id}`)
+    }
+  })
+
+  it('is identical across reopens, whatever the clock and random source return', async () => {
+    const first = await collect()
+
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2031-01-01T00:00:00Z'))
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.123456)
+    const uuid = vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000000')
+    try {
+      const second = await collect()
+      expect(second).toEqual(first)
+    } finally {
+      random.mockRestore()
+      uuid.mockRestore()
+    }
+  })
+
+  it('never reads randomness or the clock while deriving ids', async () => {
+    const random = vi.spyOn(Math, 'random')
+    const uuid = vi.spyOn(globalThis.crypto, 'randomUUID')
+    const now = vi.spyOn(Date, 'now')
+    try {
+      await collect()
+      expect(random).not.toHaveBeenCalled()
+      expect(uuid).not.toHaveBeenCalled()
+      expect(now).not.toHaveBeenCalled()
+    } finally {
+      random.mockRestore()
+      uuid.mockRestore()
+      now.mockRestore()
+    }
+  })
+})
