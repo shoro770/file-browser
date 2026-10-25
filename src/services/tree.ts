@@ -19,6 +19,7 @@ const EMPTY: TreeSnapshot = {
   childIds: {},
   expandedIds: new Set(),
   loadingIds: new Set(),
+  unavailableIds: new Set(),
   selectedId: null,
 }
 
@@ -90,6 +91,7 @@ export async function openWorkspace(): Promise<OpenOutcome> {
     childIds: {},
     expandedIds: new Set(),
     loadingIds: new Set(),
+    unavailableIds: new Set(),
     selectedId: null,
   })
   return { status: 'opened', name, count: children.length }
@@ -118,7 +120,8 @@ function withMember(set: ReadonlySet<string>, id: string, present: boolean): Set
 /**
  * Expands or collapses a folder. The first expand lists one level (names and kinds
  * only) and caches it; later expands reuse the cache with no read. Descendants keep
- * their expansion state across collapse. A failed read leaves the folder collapsed.
+ * their expansion state across collapse. A failed read marks the folder unavailable, keeps
+ * it expanded and caches that outcome: later toggles never re-read.
  *
  * @param id - Id of the folder row.
  * @returns Resolves when the toggle (including any first read) has settled; never throws.
@@ -131,7 +134,7 @@ export async function toggle(id: string): Promise<void> {
     publish({ ...snapshot, expandedIds: withMember(snapshot.expandedIds, id, false) })
     return
   }
-  if (snapshot.childIds[id]) {
+  if (snapshot.childIds[id] || snapshot.unavailableIds.has(id)) {
     publish({ ...snapshot, expandedIds: withMember(snapshot.expandedIds, id, true) })
     return
   }
@@ -162,7 +165,11 @@ export async function toggle(id: string): Promise<void> {
   const loadingIds = withMember(snapshot.loadingIds, id, false)
 
   if (!handle || !children) {
-    publish({ ...snapshot, expandedIds: withMember(snapshot.expandedIds, id, false), loadingIds })
+    publish({
+      ...snapshot,
+      unavailableIds: withMember(snapshot.unavailableIds, id, true),
+      loadingIds,
+    })
     return
   }
 

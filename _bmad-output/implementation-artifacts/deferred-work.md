@@ -16,3 +16,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-5-navigate-the-tree-by-keyboard.md`
   summary: Add component tests for the `Tree` keyboard map (arrows, Right/Left, Home/End, Enter/Space, `event.repeat`, modifier pass-through) and the tab-stop and focus-restore repair once a DOM test environment exists.
   evidence: Swapping ArrowUp/ArrowDown or returning null from `survivingKey` passes build, lint and `npm test` because only the pure helpers are tested (unverified medium); extends the Story 1.2 to 1.4 component-test entries.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-unreadable-entries-stay-contained.md`
+  summary: Add component tests for the Unavailable row (suffix, `aria-describedby` target text, "This folder can't be read." placeholder) and for `Tree.renderRows` agreeing with `visibleRows` on placeholder order, once a DOM test environment (or `renderToStaticMarkup`) exists.
+  evidence: Deleting the `else if (unavailable)` branch in `Tree.tsx` or the `aria-describedby` passes build, lint and `npm test` because only the store and `visibleRows` are tested (unverified medium); extends the Story 1.2 to 1.5 component-test entries.

@@ -71,6 +71,27 @@ export function Spinner() {
   )
 }
 
+/** Warning triangle shown beside the Unavailable caption. Decorative. */
+export function Warning() {
+  return (
+    <svg
+      className="warning"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M8 2.25l6 11H2zM8 6.5v3M8 11.5v.01" />
+    </svg>
+  )
+}
+
 /** A 16px inline-SVG kind glyph; decorative, so hidden from assistive technology. */
 export default function Glyph({ kind }: GlyphProps) {
   return (

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { findTypeAhead, PLACEHOLDER_PREFIX, pageStep, parentId, placeholderKey, visibleRows } from '../lib/tree'
 import type { TreeProps } from '../types'
-import TreeNode, { TreePlaceholder } from './TreeNode'
+import TreeNode, { TreePlaceholder, UNAVAILABLE_DESCRIPTION, UNAVAILABLE_DESCRIPTION_ID } from './TreeNode'
 
 /** Height of one tree row in px (matches the 28px row in `App.css`). */
 const ROW_HEIGHT = 28
@@ -22,6 +22,7 @@ export default function Tree({
   childIds,
   expandedIds,
   loadingIds,
+  unavailableIds,
   onToggle,
   onSelect,
   selectedId,
@@ -36,7 +37,7 @@ export default function Tree({
     listRef.current?.querySelector<HTMLElement>('[role="treeitem"]')?.focus()
   }, [focusToken])
 
-  const rows = visibleRows(items, rootIds, childIds, expandedIds, loadingIds)
+  const rows = visibleRows(items, rootIds, childIds, expandedIds, loadingIds, unavailableIds)
   const visibleKeys = new Set(rows.map((row) => row.key))
 
   /** Finds the last focused row, or its nearest ancestor that is still visible. */
@@ -141,6 +142,7 @@ export default function Tree({
       const item = items[id]
       const expanded = item.isDirectory && expandedIds.has(id)
       const loading = item.isDirectory && loadingIds.has(id)
+      const unavailable = unavailableIds.has(id)
       let children: ReactNode = null
       if (expanded) {
         const childList = childIds[id]
@@ -155,6 +157,7 @@ export default function Tree({
           />
         )
         if (loading) children = placeholder('Loading...')
+        else if (unavailable) children = placeholder("This folder can't be read.")
         else if (childList?.length === 0) children = placeholder('Empty folder')
         else if (childList) children = renderRows(childList, level + 1)
       }
@@ -170,6 +173,7 @@ export default function Tree({
           onFocusRow={setFocusedKey}
           expanded={expanded}
           loading={loading}
+          unavailable={unavailable}
           onToggle={onToggle}
           onSelect={onSelect}
         >
@@ -179,8 +183,13 @@ export default function Tree({
     })
 
   return (
-    <ul ref={listRef} className="tree" role="tree" aria-label="File tree" onKeyDown={handleKeyDown}>
-      {renderRows(rootIds, 1)}
-    </ul>
+    <>
+      <span id={UNAVAILABLE_DESCRIPTION_ID} className="visually-hidden">
+        {UNAVAILABLE_DESCRIPTION}
+      </span>
+      <ul ref={listRef} className="tree" role="tree" aria-label="File tree" onKeyDown={handleKeyDown}>
+        {renderRows(rootIds, 1)}
+      </ul>
+    </>
   )
 }

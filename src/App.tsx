@@ -18,7 +18,7 @@ export default function App({ folderPickerSupported }: AppProps) {
   const [focusToken, setFocusToken] = useState(0)
   const openButtonRef = useRef<HTMLButtonElement>(null)
 
-  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, selectedId } = snapshot
+  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, selectedId } = snapshot
 
   useEffect(() => {
     document.title = rootName === null ? 'file-browser' : `${rootName} - file-browser`
@@ -75,6 +75,7 @@ export default function App({ folderPickerSupported }: AppProps) {
             childIds={childIds}
             expandedIds={expandedIds}
             loadingIds={loadingIds}
+            unavailableIds={unavailableIds}
             onToggle={toggle}
             onSelect={handleSelect}
             selectedId={selectedId}

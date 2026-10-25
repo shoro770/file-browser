@@ -59,29 +59,36 @@ describe('visibleRows', () => {
   const rootIds = ['a', 'b', 'c', 'd']
 
   it('lists only top-level rows when nothing is expanded', () => {
-    const rows = visibleRows(items, rootIds, {}, new Set(), new Set())
+    const rows = visibleRows(items, rootIds, {}, new Set(), new Set(), new Set())
     expect(rows.map((r) => r.key)).toEqual(['a', 'b', 'c', 'd'])
     expect(rows[0].parentKey).toBeNull()
   })
   it('includes children of expanded folders with parent keys', () => {
-    const rows = visibleRows(items, rootIds, { a: ['a/x'] }, new Set(['a']), new Set())
+    const rows = visibleRows(items, rootIds, { a: ['a/x'] }, new Set(['a']), new Set(), new Set())
     expect(rows.map((r) => r.key)).toEqual(['a', 'a/x', 'b', 'c', 'd'])
     expect(rows[1].parentKey).toBe('a')
     expect(rows[0].expanded).toBe(true)
   })
   it('adds an Empty folder placeholder', () => {
-    const rows = visibleRows(items, rootIds, { b: [] }, new Set(['b']), new Set())
+    const rows = visibleRows(items, rootIds, { b: [] }, new Set(['b']), new Set(), new Set())
     expect(rows[2]).toMatchObject({ key: placeholderKey('b'), itemId: null, parentKey: 'b' })
   })
   it('keeps a file named like a placeholder distinct from the placeholder key', () => {
     expect(placeholderKey('x')).not.toBe('placeholder:x')
   })
   it('adds a loading placeholder when loading', () => {
-    const rows = visibleRows(items, rootIds, {}, new Set(['c']), new Set(['c']))
+    const rows = visibleRows(items, rootIds, {}, new Set(['c']), new Set(['c']), new Set())
     expect(rows.map((r) => r.key)).toContain(placeholderKey('c'))
   })
+  it('adds a placeholder for an expanded unavailable folder, none when collapsed', () => {
+    const open = visibleRows(items, rootIds, {}, new Set(['c']), new Set(), new Set(['c']))
+    expect(open.map((r) => r.key)).toEqual(['a', 'b', 'c', placeholderKey('c'), 'd'])
+    expect(open[3]).toMatchObject({ itemId: null, parentKey: 'c' })
+    const closed = visibleRows(items, rootIds, {}, new Set(), new Set(), new Set(['c']))
+    expect(closed).toHaveLength(4)
+  })
   it('adds nothing for an expanded folder not yet listed or loading', () => {
-    const rows = visibleRows(items, rootIds, {}, new Set(['c']), new Set())
+    const rows = visibleRows(items, rootIds, {}, new Set(['c']), new Set(), new Set())
     expect(rows).toHaveLength(4)
   })
 })
@@ -93,6 +100,7 @@ describe('findTypeAhead', () => {
     ['e', 'readme', 'report', 'src'],
     { e: [] },
     new Set(['e']),
+    new Set(),
     new Set(),
   )
   it('starts after the focused row for one character', () => {

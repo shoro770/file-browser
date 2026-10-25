@@ -225,15 +225,73 @@ describe('toggle', () => {
     expect(getSnapshot().expandedIds.has('a')).toBe(true)
   })
 
-  it('failed read leaves the folder collapsed and swallows the error', async () => {
-    const t = fakeTree('r', { a: { x: null } }, { fail: ['a'] })
+  it('failed read marks the folder unavailable, keeps it expanded and swallows the error', async () => {
+    const t = fakeTree('r', { a: { x: null }, b: { y: null } }, { fail: ['a'] })
     picker.mockResolvedValue(t.root)
     await openWorkspace()
     await expect(toggle('a')).resolves.toBeUndefined()
     const snap = getSnapshot()
-    expect(snap.expandedIds.has('a')).toBe(false)
+    expect(snap.unavailableIds.has('a')).toBe(true)
+    expect(snap.expandedIds.has('a')).toBe(true)
     expect(snap.childIds['a']).toBeUndefined()
     expect(snap.loadingIds.size).toBe(0)
+    await toggle('b')
+    expect(getSnapshot().childIds['b']).toEqual(['b/y'])
+    expect(getSnapshot().unavailableIds.has('b')).toBe(false)
+  })
+
+  it('failed open of the child handle is also unavailable', async () => {
+    const t = fakeTree('r', { a: { x: null } })
+    t.root.getDirectoryHandle.mockRejectedValueOnce(new Error('denied'))
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await toggle('a')
+    expect(getSnapshot().unavailableIds.has('a')).toBe(true)
+    expect(getSnapshot().expandedIds.has('a')).toBe(true)
+  })
+
+  it('re-toggling an unavailable folder only flips expansion, with no read', async () => {
+    const t = fakeTree('r', { a: { x: null } }, { fail: ['a'] })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await toggle('a')
+    await toggle('a')
+    expect(getSnapshot().expandedIds.has('a')).toBe(false)
+    await toggle('a')
+    expect(getSnapshot().expandedIds.has('a')).toBe(true)
+    expect(t.root.getDirectoryHandle).toHaveBeenCalledTimes(1)
+    expect(t.folders['a'].values).toHaveBeenCalledTimes(1)
+  })
+
+  it('slow failure clears loading and its timer', async () => {
+    vi.useFakeTimers()
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let slowOn = false
+    const t = fakeTree('r', { a: { x: null } }, { fail: ['a'], delay: () => (slowOn ? gate : Promise.resolve()) })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    slowOn = true
+    const done = toggle('a')
+    await vi.advanceTimersByTimeAsync(150)
+    expect(getSnapshot().loadingIds.has('a')).toBe(true)
+    release()
+    await done
+    expect(getSnapshot().loadingIds.size).toBe(0)
+    expect(getSnapshot().unavailableIds.has('a')).toBe(true)
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('opening a new workspace clears unavailable marks', async () => {
+    const t = fakeTree('r', { a: { x: null } }, { fail: ['a'] })
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    await toggle('a')
+    picker.mockResolvedValue(fakeTree('r2', { a: {} }).root)
+    await openWorkspace()
+    expect(getSnapshot().unavailableIds.size).toBe(0)
   })
 
   it('stale read is discarded when a new workspace opens', async () => {

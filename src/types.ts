@@ -59,6 +59,8 @@ export interface TreeSnapshot {
   expandedIds: ReadonlySet<string>
   /** Ids of folders whose first read has run past the loading delay. */
   loadingIds: ReadonlySet<string>
+  /** Ids of entries that could not be read. */
+  unavailableIds: ReadonlySet<string>
   /** Id of the selected file; `null` when nothing is selected. */
   selectedId: string | null
 }
@@ -102,6 +104,8 @@ export interface TreeProps {
   expandedIds: ReadonlySet<string>
   /** Ids of folders showing a loading state. */
   loadingIds: ReadonlySet<string>
+  /** Ids of entries that could not be read. */
+  unavailableIds: ReadonlySet<string>
   /** Called to expand or collapse a folder. */
   onToggle: (id: string) => void
   /** Called to select a file. */
@@ -130,6 +134,8 @@ export interface TreeNodeProps {
   expanded: boolean
   /** Folders only: whether the first read is slow enough to show a spinner. */
   loading: boolean
+  /** Whether the entry could not be read; shows the Unavailable mark. */
+  unavailable: boolean
   /** Called to expand or collapse a folder row. */
   onToggle: (id: string) => void
   /** Called to select a file row. */

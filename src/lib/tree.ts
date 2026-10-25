@@ -94,13 +94,14 @@ export function placeholderKey(folderId: string): string {
 
 /**
  * Flattens the tree into the rows currently visible, in display order, including the
- * "Loading..." and "Empty folder" placeholder rows.
+ * "Loading...", "Empty folder" and unavailable-folder placeholder rows.
  *
  * @param items - Every loaded item, keyed by id.
  * @param rootIds - Ids of the top-level rows.
  * @param childIds - Ordered child ids of every listed folder.
  * @param expandedIds - Ids of expanded folders.
  * @param loadingIds - Ids of folders showing a loading state.
+ * @param unavailableIds - Ids of folders that could not be read.
  * @returns The visible rows; placeholder keys are `placeholderKey(folderId)`.
  */
 export function visibleRows(
@@ -109,6 +110,7 @@ export function visibleRows(
   childIds: Readonly<Record<string, readonly string[]>>,
   expandedIds: ReadonlySet<string>,
   loadingIds: ReadonlySet<string>,
+  unavailableIds: ReadonlySet<string>,
 ): VisibleRow[] {
   const rows: VisibleRow[] = []
   const walk = (ids: readonly string[], parentKey: string | null) => {
@@ -122,6 +124,7 @@ export function visibleRows(
         key: placeholderKey(id), itemId: null, parentKey: id, isDirectory: false, expanded: false, name: '',
       }
       if (loadingIds.has(id)) rows.push(placeholder)
+      else if (unavailableIds.has(id)) rows.push(placeholder)
       else if (childList?.length === 0) rows.push(placeholder)
       else if (childList) walk(childList, id)
     }

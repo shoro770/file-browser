@@ -185,6 +185,15 @@
   color: var(--color-text-muted);
 }
 
+.tree-row__suffix {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-caption);
+  color: var(--color-danger-text);
+}
+
 .tree-row .glyph {
   flex: none;
 }
