@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-25-2026 01:41
-last_updated: 10-25-2026 10:00
+last_updated: 10-26-2026 00:06
 project: file-browser
 project_key: NOKEY
 tracking_system: file-system
@@ -51,7 +51,7 @@ development_status:
   2-2-preview-text-files: done
   2-3-preview-images: done
   2-4-failed-previews-degrade-gracefully: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
   epic-3: backlog
   3-1-preview-markdown-safely: backlog
@@ -100,3 +100,37 @@ action_items:
     owner: "dev"
     status: open
     ref: "/Users/shalom/file-browser/_bmad-output/implementation-artifacts/epic-1-retro-2026-10-25.md"
+  - id: "epic-2-retro-item-5-add-a-dom-test-environment-and-write-the"
+    epic: 2
+    action: "Add a DOM test environment and write the Epic 2 and deferred Epic 1 component
+      tests before Epic 3 adds renderers"
+    owner: "dev"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-2-retro-2026-10-26.md"
+  - id: "epic-2-retro-item-6-run-bmad-review-over-f1cefd6-0da1fcc-and"
+    epic: 2
+    action: "Run bmad-review over f1cefd6^..0da1fcc and ee1693d^..d4fdc3e weighting
+      story boundaries"
+    owner: "dev"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-2-retro-2026-10-26.md"
+  - id: "epic-2-retro-item-7-manually-exercise-epics-1-and-2-in-chrom"
+    epic: 2
+    action: "Manually exercise Epics 1 and 2 in Chrome/Edge then set epic-1 and epic-2
+      to done"
+    owner: "Shneor"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-2-retro-2026-10-26.md"
+  - id: "epic-2-retro-item-8-make-git_evidence-py-read-the-story-foot"
+    epic: 2
+    action: "Make git_evidence.py read the Story footer so feature commits are attributed"
+    owner: "dev"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-2-retro-2026-10-26.md"
+  - id: "epic-2-retro-item-9-check-that-the-ref-paths-on-the-epic-1-a"
+    epic: 2
+    action: "Check that the ref paths on the Epic 1 action_items resolve and correct
+      them"
+    owner: "dev"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-2-retro-2026-10-26.md"
