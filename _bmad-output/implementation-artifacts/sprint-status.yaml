@@ -50,7 +50,7 @@ development_status:
   2-1-see-a-selected-file-s-details: done
   2-2-preview-text-files: done
   2-3-preview-images: done
-  2-4-failed-previews-degrade-gracefully: backlog
+  2-4-failed-previews-degrade-gracefully: review
   epic-2-retrospective: optional
 
   epic-3: backlog

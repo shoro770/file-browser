@@ -301,7 +301,7 @@
 }
 
 .metadata-card__note {
-  margin: 0 0 var(--space-4);
+  margin: var(--space-4) 0 0;
   color: var(--color-text-muted);
 }
 

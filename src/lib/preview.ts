@@ -193,9 +193,11 @@ export function typeLabel(name: string, mime = ''): string {
  *
  * @param name - Base name of the file.
  * @param size - Size in bytes.
- * @returns The empty-file, legacy-`.doc` or no-preview sentence.
+ * @param failed - Whether a renderer was tried and failed; this sentence wins.
+ * @returns The render-failure, empty-file, legacy-`.doc` or no-preview sentence.
  */
-export function cardExplanation(name: string, size: number): string {
+export function cardExplanation(name: string, size: number, failed = false): string {
+  if (failed) return RENDER_FAILED_MESSAGE
   if (size === 0) return EMPTY_FILE_MESSAGE
   if (extensionOf(name) === 'doc') return LEGACY_DOC_MESSAGE
   return NO_PREVIEW_MESSAGE

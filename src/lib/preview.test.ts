@@ -3,6 +3,7 @@ import {
   EMPTY_FILE_MESSAGE,
   LEGACY_DOC_MESSAGE,
   NO_PREVIEW_MESSAGE,
+  RENDER_FAILED_MESSAGE,
   cardExplanation,
   extensionOf,
   glyphForFile,
@@ -189,5 +190,9 @@ describe('cardExplanation', () => {
   })
   it('falls back to the no-preview sentence', () => {
     expect(cardExplanation('a.exe', 10)).toBe(NO_PREVIEW_MESSAGE)
+  })
+  it('puts a render failure ahead of the other sentences', () => {
+    expect(cardExplanation('a.png', 10, true)).toBe(RENDER_FAILED_MESSAGE)
+    expect(cardExplanation('a.DOC', 0, true)).toBe(RENDER_FAILED_MESSAGE)
   })
 })

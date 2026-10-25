@@ -246,6 +246,8 @@ export interface TextPreviewProps {
 /** Props for the `ImagePreview` component. */
 export interface ImagePreviewProps {
   source: PreviewSource
+  /** Called when the browser cannot decode the image. */
+  onError?: () => void
 }
 
 /** Props for the `PreviewPane` component. */
@@ -277,6 +279,16 @@ export interface MetadataCardProps {
   name: string
   /** Current time, for the relative stamp. */
   now: Date
+  /** Whether a renderer failed for this file, so the card gives the render-failure explanation. */
+  failed?: boolean
+}
+
+/** Props for the `PreviewBoundary` component. */
+export interface PreviewBoundaryProps {
+  /** Called when a child throws. Never receives the error. */
+  onFail: () => void
+  /** The renderer to guard; the boundary draws nothing after a failure. */
+  children: ReactNode
 }
 
 /** Props for the `OpenFolderPrompt` component. */
