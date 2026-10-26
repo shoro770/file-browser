@@ -249,6 +249,17 @@ export interface MarkdownPreviewProps {
   source: PreviewSource
 }
 
+/** Props for the `DocxPreview` component. */
+export interface DocxPreviewProps {
+  source: PreviewSource
+}
+
+/** Props for the `RenderedContent` component. */
+export interface RenderedContentProps {
+  /** Sanitized fragment from `services/sanitize`; appended as a clone. */
+  fragment: DocumentFragment
+}
+
 /** Props for the `TruncationBanner` component. */
 export interface TruncationBannerProps {
   /** Full size of the cut file in bytes. */

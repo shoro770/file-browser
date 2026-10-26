@@ -115,15 +115,17 @@ export function isPdfName(name: string): boolean {
  * @param kind - Resolved preview kind.
  * @param hasText - Whether the session read leading text.
  * @param hasImageUrl - Whether the session created an object URL.
- * @returns `text`, `markdown` or `image` when that renderer has what it needs, else `card`.
+ * @returns `text`, `markdown`, `docx` or `image` when that renderer has what it needs, else `card`.
  */
 export function rendererFor(
   kind: PreviewKind,
   hasText: boolean,
   hasImageUrl: boolean,
-): 'text' | 'markdown' | 'image' | 'card' {
+): 'text' | 'markdown' | 'docx' | 'image' | 'card' {
   if (kind === 'text' && hasText) return 'text'
   if (kind === 'markdown' && hasText) return 'markdown'
+  // A Word document is read from `source.file` by its renderer, so it needs no text or URL.
+  if (kind === 'docx') return 'docx'
   if (kind === 'image' && hasImageUrl) return 'image'
   return 'card'
 }

@@ -261,12 +261,13 @@
   flex: none;
 }
 
-/* Sanitized Markdown carries no classes, so it is styled by element under .markdown-preview__content. */
-.markdown-preview {
+/* Sanitized Markdown carries no classes, so it is styled by element under .rendered-content (Markdown and Word). */
+.markdown-preview,
+.docx-preview {
   min-height: calc(100% - var(--preview-header-height));
 }
 
-.markdown-preview__content {
+.rendered-content {
   box-sizing: border-box;
   max-width: var(--size-reading-max);
   padding: var(--space-5) var(--space-4);
@@ -276,7 +277,7 @@
   overflow-wrap: anywhere;
 }
 
-.markdown-preview__content :is(h1, h2, h3, h4, h5, h6) {
+.rendered-content :is(h1, h2, h3, h4, h5, h6) {
   margin: var(--space-5) 0 var(--space-2);
   font-size: var(--font-size-body);
   font-weight: 600;
@@ -284,40 +285,40 @@
   scroll-margin-top: calc(var(--preview-header-height) + var(--space-2));
 }
 
-.markdown-preview__content h1 {
+.rendered-content h1 {
   font-size: var(--font-size-heading-lg);
 }
 
-.markdown-preview__content :is(h2, h3) {
+.rendered-content :is(h2, h3) {
   font-size: var(--font-size-heading-md);
 }
 
-.markdown-preview__content > :first-child {
+.rendered-content > :first-child {
   margin-top: 0;
 }
 
-.markdown-preview__content :is(p, ul, ol, dl, blockquote, pre, table) {
+.rendered-content :is(p, ul, ol, dl, blockquote, pre, table) {
   margin: 0 0 var(--space-3);
 }
 
-.markdown-preview__content :is(ul, ol) {
+.rendered-content :is(ul, ol) {
   padding-inline-start: var(--space-5);
 }
 
-.markdown-preview__content blockquote {
+.rendered-content blockquote {
   padding-inline-start: var(--space-3);
   border-inline-start: 3px solid var(--color-border-strong);
   color: var(--color-text-muted);
 }
 
-.markdown-preview__content a {
+.rendered-content a {
   color: var(--color-accent);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
 
-.markdown-preview__content :is(code, kbd) {
+.rendered-content :is(code, kbd) {
   padding: 0.1em 0.35em;
   background: var(--color-code-bg);
   border-radius: var(--radius-sm);
@@ -325,32 +326,38 @@
   font-size: var(--font-size-label);
 }
 
-.markdown-preview__content pre {
+.rendered-content pre {
   padding: var(--space-3) var(--space-4);
   background: var(--color-code-bg);
   border-radius: var(--radius);
   overflow-x: auto;
 }
 
-.markdown-preview__content pre code {
+.rendered-content pre code {
   padding: 0;
   background: none;
   white-space: pre;
 }
 
 /* Stays a real table (display: block would drop its semantics); long cells wrap instead of scrolling. */
-.markdown-preview__content table {
+.rendered-content table {
   max-width: 100%;
   border-collapse: collapse;
 }
 
-.markdown-preview__content :is(th, td) {
+.rendered-content :is(th, td) {
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--color-border-strong);
   text-align: start;
 }
 
-.markdown-preview__content hr {
+/* Only Word documents keep real images (Markdown images are all placeholders). */
+.rendered-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.rendered-content hr {
   border: 0;
   border-block-start: 1px solid var(--color-border);
 }

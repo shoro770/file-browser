@@ -10,6 +10,9 @@ import TextPreview from './preview/TextPreview'
 /** The Markdown renderer and its parser and sanitizer load on first use (AD-9, AD-15). */
 const MarkdownPreview = lazy(() => import('./preview/MarkdownPreview'))
 
+/** The Word renderer and its converter load on first use (AD-9, AD-15). */
+const DocxPreview = lazy(() => import('./preview/DocxPreview'))
+
 /** Id of the header `h2` that names the preview region. */
 const TITLE_ID = 'preview-title'
 
@@ -36,7 +39,7 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
   const renderFailed = state.status === 'ready' && failedSource === state.source
 
   useEffect(() => {
-    // Text and image previews are announced on activation only ("Previewing {name}"); cards, including a render failure, get the no-preview text.
+    // Text, Markdown, Word and image previews are announced on activation only ("Previewing {name}"); cards, including a render failure, get the no-preview text.
     if (state.status === 'ready') {
       if (renderFailed || rendererOf(state.source) === 'card') onAnnounce(`${state.source.meta.name}: no preview available`)
     } else if (state.status === 'failed') onAnnounce(`${state.name}: no preview available`)
@@ -67,6 +70,12 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
             <PreviewBoundary key={key} onFail={fail}>
               <Suspense fallback={null}>
                 <MarkdownPreview source={state.source} />
+              </Suspense>
+            </PreviewBoundary>
+          ) : renderer === 'docx' ? (
+            <PreviewBoundary key={key} onFail={fail}>
+              <Suspense fallback={null}>
+                <DocxPreview source={state.source} />
               </Suspense>
             </PreviewBoundary>
           ) : renderer === 'image' ? (

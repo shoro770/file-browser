@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "dompurify": "^3.4.17",
+    "mammoth": "^1.13.0",
     "marked": "^18.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
@@ -25,6 +26,7 @@
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^30.1.3",
+    "jszip": "^3.10.2",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",

@@ -52,3 +52,18 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-1-preview-markdown-safely.md`
   summary: Decide whether to allow `details`/`summary` and keep alt text for badge-style images, since every image is a 3rem blocked placeholder and collapsible sections always render open.
   evidence: README-style Markdown with badge rows shows several placeholders; this follows the AC (all images blocked) but may read poorly (unverified low).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-preview-word-documents.md`
+  summary: Check `DocxPreview` in Chrome or Edge against `vite build` + `vite preview` with the network panel open: a real Word export and a hostile `.docx` (script text, `javascript:` link, linked image) make zero requests; a ~5 MB `.docx` paints in under 1 s from click including the first lazy load; headings, lists, tables and embedded images look right; prose is capped at 760px and follows all three themes.
+  evidence: Story 3.2 was verified only in jsdom with synthetic `.docx` fixtures built in tests, which has no layout, no real Word output, no timing and no network panel; the SM-3 proof is Story 3.4's job (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-preview-word-documents.md`
+  summary: Decide whether Word bookmark links (table of contents, cross-references) should work beyond the name-matches-heading case: the sanitizer strips ids, so a `#bookmark` link survives only when its name slugs to a heading's text.
+  evidence: Word tables of contents link to `_Toc…` bookmarks, which match no heading, so those entries show as plain text; this follows the accepted open-question default (unverified low).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-preview-word-documents.md`
+  summary: Decide whether `renderDocx` should tell the reader when mammoth skipped content (text boxes, headers, footers, comments, tracked changes), and what an empty conversion result should show.
+  evidence: Only `result.value` is used; `result.messages` is dropped, so a partial or blank document looks complete (unverified low).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-preview-word-documents.md`
+  summary: Measure main-thread time and memory for a large `.docx` (many images, which become base64 `data:` URLs) and decide on a size cap or a Worker; `renderDocx` reads the whole file and cannot cancel the conversion mid-way.
+  evidence: `mammoth` runs on the main thread and only the checks before and after it honor `source.signal`; no timing was taken (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-2-preview-word-documents.md`
+  summary: Decide whether `PreviewPane` should show a placeholder while the lazy Word chunk loads (the `Suspense` fallback is `null`); the chunk is much larger than the Markdown one.
+  evidence: The header and the "Loading preview..." status stay, but the body is blank until the chunk arrives on first use; not measurable headlessly (unverified medium).

@@ -96,6 +96,17 @@ describe('rendererFor', () => {
     expect(rendererFor('markdown', true, false)).toBe('markdown')
   })
 
+  it('gives a docx its renderer without text or an image URL', () => {
+    expect(rendererFor('docx', false, false)).toBe('docx')
+    expect(rendererFor('docx', true, true)).toBe('docx')
+  })
+
+  it('keeps legacy .doc and empty .docx on the card, because the resolver already says metadata', () => {
+    expect(rendererFor(resolvePreviewKind('a.doc', '', 10), false, false)).toBe('card')
+    expect(rendererFor(resolvePreviewKind('a.docx', '', 0), false, false)).toBe('card')
+    expect(rendererFor(resolvePreviewKind('a.docx', '', 10), false, false)).toBe('docx')
+  })
+
   it('gives markdown the card without leading text', () => {
     expect(rendererFor('markdown', false, false)).toBe('card')
     expect(rendererFor('markdown', false, true)).toBe('card')
@@ -106,7 +117,7 @@ describe('rendererFor', () => {
     expect(rendererFor('image', true, false)).toBe('card')
     expect(rendererFor('image', false, false)).toBe('card')
     expect(rendererFor('text', false, true)).toBe('card')
-    for (const kind of ['pdf', 'docx', 'metadata'] as const) {
+    for (const kind of ['pdf', 'metadata'] as const) {
       expect(rendererFor(kind, true, true)).toBe('card')
     }
   })
