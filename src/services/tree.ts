@@ -5,8 +5,8 @@
  */
 
 import { reconcile } from '../lib/reconcile'
-import { isDotfileId, parentId } from '../lib/tree'
-import type { FileItem, FreshLevels, OpenOutcome, RefreshOutcome, TreeSnapshot } from '../types'
+import { filterDotfiles, isDotfileId, parentId } from '../lib/tree'
+import type { FileItem, FolderSummary, FreshLevels, OpenOutcome, RefreshOutcome, TreeSnapshot } from '../types'
 import { handleName, listChildren, openChildDirectory, pickDirectory, readFile } from './fs'
 import type { WorkspaceHandle } from './fs'
 import { readShowDotfiles, writeShowDotfiles } from './prefs'
@@ -106,14 +106,14 @@ export async function openWorkspace(): Promise<OpenOutcome> {
 }
 
 /**
- * Selects a file. Accepts only a loaded, non-directory id; anything else, and the
+ * Selects a file or folder. Accepts only a loaded id; anything else, and the
  * already-selected id, is a silent no-op.
  *
- * @param id - Id of the file row to select.
+ * @param id - Id of the row to select.
  */
 export function select(id: string): void {
   const item = snapshot.items[id]
-  if (!item || item.isDirectory || id === snapshot.selectedId) return
+  if (!item || id === snapshot.selectedId) return
   publish({ ...snapshot, selectedId: id })
 }
 
@@ -130,6 +130,36 @@ export function readItemFile(id: string): Promise<File> {
   const parent = handles.get(parentId(id))
   if (!item || item.isDirectory || !parent) return Promise.reject(new Error('not a readable file'))
   return readFile(parent, item.name)
+}
+
+/**
+ * Counts a folder's direct children as the tree shows them (dotfiles follow the toggle). Uses
+ * the cached listing when the folder has been listed, else lists it once without caching or
+ * expanding it. Never recurses.
+ *
+ * @param id - Id of a loaded folder.
+ * @returns The name, path and counts.
+ * @throws If the id is not a loaded folder or it can't be listed.
+ */
+export async function summarizeFolder(id: string): Promise<FolderSummary> {
+  const item = snapshot.items[id]
+  if (!item?.isDirectory) throw new Error('not a folder')
+  const cached = snapshot.childIds[id]
+  let items = snapshot.items
+  let ids: readonly string[]
+  if (cached) ids = cached
+  else {
+    const started = generation
+    const parent = handles.get(parentId(id))
+    if (!parent || snapshot.unavailableIds.has(id)) throw new Error('folder not readable')
+    const children = await listChildren(handles.get(id) ?? (await openChildDirectory(parent, item.name)), id)
+    if (started !== generation) throw new Error('workspace changed')
+    items = Object.fromEntries(children.map((child) => [child.id, child]))
+    ids = children.map((child) => child.id)
+  }
+  const shown = filterDotfiles(ids, items, snapshot.showDotfiles)
+  const folderCount = shown.filter((child) => items[child].isDirectory).length
+  return { name: item.name, path: item.path, folderCount, fileCount: shown.length - folderCount }
 }
 
 /**
@@ -220,7 +250,7 @@ export async function refresh(): Promise<RefreshOutcome> {
     // A Selection that survived the listing must still be readable; probe it once, before publishing.
     const probedId = next.selectedId
     let unreadable = false
-    if (probedId !== null) {
+    if (probedId !== null && !next.items[probedId].isDirectory) {
       const parent = gathered.opened.get(parentId(probedId)) ?? handles.get(parentId(probedId))
       try {
         if (!parent) throw new Error('no handle')

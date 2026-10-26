@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import EmptyPreview from './components/EmptyPreview'
 import Glyph from './components/Glyph'
 import HiddenFilesToggle from './components/HiddenFilesToggle'
-import OpenFolderPrompt from './components/OpenFolderPrompt'
 import PaneDivider from './components/PaneDivider'
 import PreviewPane from './components/PreviewPane'
 import RefreshButton from './components/RefreshButton'
@@ -119,12 +119,18 @@ export default function App({ folderPickerSupported }: AppProps) {
     openButtonRef.current?.focus()
   }
 
-  function handleSelect(id: string) {
+  /** Selects without announcing (keyboard moves: the focused row is already read). */
+  function handleFollow(id: string) {
     if (id === selectedId) return
     setDenied(false)
     setNotice(null)
     select(id)
-    say(`Previewing ${items[id].name}`)
+  }
+
+  /** Selects on activation; announces files ("Previewing {name}"), not folders. */
+  function handleSelect(id: string) {
+    handleFollow(id)
+    if (id !== selectedId && !items[id].isDirectory) say(`Previewing ${items[id].name}`)
   }
 
   function handleToggle(id: string) {
@@ -174,6 +180,7 @@ export default function App({ folderPickerSupported }: AppProps) {
             showDotfiles={showDotfiles}
             onToggle={handleToggle}
             onSelect={handleSelect}
+            onFollow={handleFollow}
             selectedId={selectedId}
             focusToken={focusToken}
           />
@@ -191,27 +198,13 @@ export default function App({ folderPickerSupported }: AppProps) {
         {selectedItem !== null ? (
           <PreviewPane state={preview.state} now={preview.now} loading={preview.loading} onAnnounce={setStatus} />
         ) : (
-          <div className="preview" role="region" aria-label="Preview">
-            {rootName !== null && notice !== null && <p className="preview__notice">{notice}</p>}
-            {rootName === null ? (
-              <OpenFolderPrompt onOpen={handleOpen} />
-            ) : rootIds.length === 0 ? (
-              <div className="prompt">
-                <h2 className="prompt__title">This folder is empty.</h2>
-                <p className="prompt__body">There are no files here to show.</p>
-              </div>
-            ) : visibleRootIds.length === 0 ? (
-              <div className="prompt">
-                <h2 className="prompt__title">Nothing to show.</h2>
-                <p className="prompt__body">Hidden files are turned off.</p>
-              </div>
-            ) : (
-              <div className="prompt">
-                <h2 className="prompt__title">Select a file to preview it.</h2>
-                <p className="prompt__body">Folders open in the tree on the left.</p>
-              </div>
-            )}
-          </div>
+          <EmptyPreview
+            rootName={rootName}
+            notice={notice}
+            rootEmpty={rootIds.length === 0}
+            nothingVisible={visibleRootIds.length === 0}
+            onOpen={handleOpen}
+          />
         )}
       </main>
     </div>

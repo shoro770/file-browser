@@ -8,8 +8,8 @@
 
 import { imageMimeFor, resolvePreviewKind } from '../lib/preview'
 import { MAX_TEXT_BYTES, trimPartialUtf8 } from '../lib/text'
-import type { PreviewKind, PreviewState, TextContent } from '../types'
-import { readItemFile } from './tree'
+import type { FolderSummary, PreviewKind, PreviewState, TextContent } from '../types'
+import { readItemFile, summarizeFolder } from './tree'
 
 /** Reads the `File` for an item id. */
 export type FileReader = (id: string) => Promise<File>
@@ -27,6 +27,9 @@ async function readLeadingText(file: File): Promise<TextContent> {
   return { text, truncated, totalSize: file.size }
 }
 
+/** Counts a folder's direct children for the folder card. */
+export type FolderSummarizer = (id: string) => Promise<FolderSummary>
+
 /** The object URL functions a session uses; `URL` in the app, a fake in tests. */
 export interface ObjectUrls {
   createObjectURL(blob: Blob): string
@@ -39,10 +42,11 @@ export interface PreviewSessions {
    * Starts a session for a file, aborting the previous one.
    *
    * @param id - Id of the selected file.
-   * @param name - Base name of the file.
+   * @param name - Base name of the file or folder.
+   * @param directory - Whether the item is a folder; it then gets a `folder` summary, not a file read.
    * @returns The outcome, or `null` if a newer session replaced this one. Never throws.
    */
-  open(id: string, name: string): Promise<PreviewState | null>
+  open(id: string, name: string, directory?: boolean): Promise<PreviewState | null>
   /** Aborts the current session, if any. */
   close(): void
 }
@@ -51,9 +55,15 @@ export interface PreviewSessions {
  * Creates a session manager.
  *
  * @param read - How to read an item's `File`.
+ * @param urls - Object URL functions.
+ * @param summarize - How to count a folder's children.
  * @returns The manager.
  */
-export function createPreviewSessions(read: FileReader, urls: ObjectUrls = URL): PreviewSessions {
+export function createPreviewSessions(
+  read: FileReader,
+  urls: ObjectUrls = URL,
+  summarize: FolderSummarizer = summarizeFolder,
+): PreviewSessions {
   let current: AbortController | null = null
   let currentUrl: string | null = null
 
@@ -66,10 +76,19 @@ export function createPreviewSessions(read: FileReader, urls: ObjectUrls = URL):
   }
 
   return {
-    async open(id, name) {
+    async open(id, name, directory = false) {
       end()
       const controller = new AbortController()
       current = controller
+
+      if (directory) {
+        try {
+          const summary = await summarize(id)
+          return controller.signal.aborted ? null : { status: 'folder', id, summary }
+        } catch {
+          return controller.signal.aborted ? null : { status: 'failed', id, name, directory: true }
+        }
+      }
 
       let file: File
       let kind: PreviewKind

@@ -62,7 +62,7 @@ export default function TreeNode({
 }: TreeNodeProps) {
   function activate() {
     if (item.isDirectory) onToggle(item.id)
-    else onSelect(item.id)
+    onSelect(item.id)
   }
 
   const classes = ['tree-row']
@@ -78,7 +78,7 @@ export default function TreeNode({
       aria-setsize={setSize}
       aria-posinset={posInSet}
       aria-expanded={item.isDirectory ? expanded : undefined}
-      aria-selected={item.isDirectory ? undefined : selected}
+      aria-selected={selected}
       aria-describedby={unavailable ? UNAVAILABLE_DESCRIPTION_ID : undefined}
       tabIndex={tabIndex}
       data-key={item.id}

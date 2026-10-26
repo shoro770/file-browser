@@ -34,6 +34,10 @@ describe('usePreview', () => {
     expect(result.current.state).toMatchObject({ id: 'a' })
     rerender({ i: item('b') })
     act(() => {
+      vi.advanceTimersByTime(75)
+    })
+    expect(calls).toHaveLength(2)
+    act(() => {
       vi.advanceTimersByTime(149)
     })
     expect(result.current.loading).toBe(false)
@@ -72,9 +76,32 @@ describe('usePreview', () => {
   it('drops the late result of a superseded id and a null result', async () => {
     const { result, rerender } = renderHook(({ i }) => usePreview(i), { initialProps: { i: item('a') } })
     rerender({ i: item('b') })
+    act(() => {
+      vi.advanceTimersByTime(75)
+    })
     await act(async () => calls[0](failed('a')))
     expect(result.current.state.status).toBe('idle')
     await act(async () => calls[1](null))
     expect(result.current.state.status).toBe('idle')
+  })
+
+  it('reads only where a quick run of switches stops, and reads the first item at once', async () => {
+    const { rerender } = renderHook(({ i }) => usePreview(i), { initialProps: { i: item('a') } })
+    expect(calls).toHaveLength(1)
+    await act(async () => calls[0](failed('a')))
+    rerender({ i: item('b') })
+    rerender({ i: item('c') })
+    rerender({ i: item('d') })
+    expect(calls).toHaveLength(1)
+    act(() => {
+      vi.advanceTimersByTime(75)
+    })
+    expect(calls).toHaveLength(2)
+  })
+
+  it('reads a folder as a directory', async () => {
+    const { openPreview } = await import('../services/previewSession')
+    renderHook(() => usePreview({ ...item('d'), isDirectory: true }))
+    expect(openPreview).toHaveBeenLastCalledWith('d', 'd', true)
   })
 })

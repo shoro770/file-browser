@@ -36,6 +36,7 @@ export default function Tree({
   showDotfiles,
   onToggle,
   onSelect,
+  onFollow,
   selectedId,
   focusToken,
 }: TreeProps) {
@@ -97,16 +98,19 @@ export default function Tree({
     }
   })
 
-  const handleKeyDown =(event: KeyboardEvent<HTMLUListElement>) => {
+  const handleKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
     if (event.ctrlKey || event.metaKey || event.altKey) return
     const key = (event.target as HTMLElement).dataset.key
     if (key === undefined) return
     const index = rows.findIndex((row) => row.key === key)
     if (index < 0) return
     const row = rows[index]
-    const moveTo = (next: number) => {
-      focusRow(rows[Math.min(rows.length - 1, Math.max(0, next))].key)
+    /** Moves focus to a row and, when it is a real item, selects it so the preview follows. */
+    const follow = (target: (typeof rows)[number]) => {
+      focusRow(target.key)
+      if (target.itemId !== null) onFollow(target.itemId)
     }
+    const moveTo = (next: number) => follow(rows[Math.min(rows.length - 1, Math.max(0, next))])
     // The list grows with its rows; the scrolling pane around it sets the visible page.
     const page = () => pageStep(listRef.current?.parentElement?.clientHeight ?? 0, ROW_HEIGHT)
 
@@ -131,19 +135,23 @@ export default function Tree({
         break
       case 'ArrowRight':
         if (row.itemId !== null && row.isDirectory) {
-          if (!row.expanded) onToggle(row.itemId)
-          else if (rows[index + 1]?.parentKey === row.key) focusRow(rows[index + 1].key)
+          if (!row.expanded) {
+            onToggle(row.itemId)
+            onFollow(row.itemId)
+          } else if (rows[index + 1]?.parentKey === row.key) follow(rows[index + 1])
         }
         break
       case 'ArrowLeft':
-        if (row.itemId !== null && row.isDirectory && row.expanded) onToggle(row.itemId)
-        else if (row.parentKey !== null) focusRow(row.parentKey)
+        if (row.itemId !== null && row.isDirectory && row.expanded) {
+          onToggle(row.itemId)
+          onFollow(row.itemId)
+        } else if (row.parentKey !== null) follow(rows[rows.findIndex((r) => r.key === row.parentKey)])
         break
       case 'Enter':
       case ' ':
         if (!event.repeat && row.itemId !== null) {
           if (row.isDirectory) onToggle(row.itemId)
-          else onSelect(row.itemId)
+          onSelect(row.itemId)
         }
         break
       default: {
@@ -153,7 +161,7 @@ export default function Tree({
         buffer.query = now - buffer.time <= TYPE_AHEAD_MS ? buffer.query + event.key : event.key
         buffer.time = now
         const found = findTypeAhead(rows, index, buffer.query)
-        if (found >= 0) focusRow(rows[found].key)
+        if (found >= 0) follow(rows[found])
       }
     }
     event.preventDefault()

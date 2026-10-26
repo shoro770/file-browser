@@ -374,11 +374,12 @@ describe('select', () => {
     expect(getSnapshot()).toBe(before)
   })
 
-  it('ignores folder, unknown and empty ids', async () => {
+  it('selects a folder, and ignores unknown and empty ids', async () => {
     await open({ a: null, d: {} })
     select('a')
-    const before = getSnapshot()
     select('d')
+    expect(getSnapshot().selectedId).toBe('d')
+    const before = getSnapshot()
     select('nope')
     select(null as unknown as string)
     expect(getSnapshot()).toBe(before)

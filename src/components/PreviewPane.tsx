@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { rendererFor } from '../lib/preview'
 import type { PreviewPaneProps, PreviewSource } from '../types'
+import FolderCard from './FolderCard'
 import MetadataCard from './MetadataCard'
 import PreviewHeader from './PreviewHeader'
 import ImagePreview from './preview/ImagePreview'
@@ -31,7 +32,7 @@ function sourceKey(id: string, { imageUrl, pdfUrl }: PreviewSource): string {
 }
 
 /**
- * Preview Pane for a selected file: a named, focusable region holding the header and the
+ * Preview Pane for a selected file or folder: a named, focusable region holding the header and the
  * renderer for the file's kind. Kinds without a renderer yet show the Metadata Card.
  * The previous file stays on screen until the new one is ready. A renderer that throws or
  * cannot decode its file is replaced by the Metadata Card with the render-failure text.
@@ -46,7 +47,7 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
     // Text, Markdown, Word, PDF and image previews are announced on activation only ("Previewing {name}"); cards, including a render failure, get the no-preview text.
     if (state.status === 'ready') {
       if (renderFailed || rendererOf(state.source) === 'card') onAnnounce(`${state.source.meta.name}: no preview available`)
-    } else if (state.status === 'failed') onAnnounce(`${state.name}: no preview available`)
+    } else if (state.status === 'failed' && !state.directory) onAnnounce(`${state.name}: no preview available`)
   }, [state, renderFailed, onAnnounce])
 
   // The visible text below is not a live region; the single status region speaks it (UX-DR22).
@@ -54,7 +55,7 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
     if (loading) onAnnounce('Loading preview...')
   }, [loading, onAnnounce])
 
-  const named = state.status === 'ready'
+  const named = state.status === 'ready' || state.status === 'folder'
   const renderer = state.status === 'ready' && !renderFailed ? rendererOf(state.source) : 'card'
   // Bound to this source: a late failure from an old source cannot fail the new one.
   const fail = () => {
@@ -104,9 +105,18 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
           )}
         </>
       )}
+      {state.status === 'folder' && (
+        <div className="preview__body">
+          <FolderCard summary={state.summary} name={state.summary.name} titleId={TITLE_ID} />
+        </div>
+      )}
       {state.status === 'failed' && (
         <div className="preview__body">
-          <MetadataCard meta={null} name={state.name} now={now} />
+          {state.directory ? (
+            <FolderCard summary={null} name={state.name} />
+          ) : (
+            <MetadataCard meta={null} name={state.name} now={now} />
+          )}
         </div>
       )}
       <p className="preview__loading">

@@ -358,3 +358,36 @@ describe('createPreviewSessions object URLs', () => {
     expect(urls.created).toHaveLength(0)
   })
 })
+
+describe('createPreviewSessions folders', () => {
+  const urls = { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} }
+  const summary = { name: 'd', path: '/d', folderCount: 1, fileCount: 2 }
+
+  it('returns a folder summary and reads no file', async () => {
+    const reader = async (): Promise<File> => {
+      throw new Error('should not read')
+    }
+    const sessions = createPreviewSessions(reader, urls, async () => summary)
+    expect(await sessions.open('d', 'd', true)).toEqual({ status: 'folder', id: 'd', summary })
+  })
+
+  it('turns a failed summary into a directory failure', async () => {
+    const sessions = createPreviewSessions(async () => file('a'), urls, async () => {
+      throw new Error('nope')
+    })
+    expect(await sessions.open('d', 'd', true)).toEqual({ status: 'failed', id: 'd', name: 'd', directory: true })
+  })
+
+  it('drops a stale folder result when a newer session opens', async () => {
+    let release = (_value: typeof summary) => {}
+    const sessions = createPreviewSessions(
+      async () => file('a.txt'),
+      urls,
+      () => new Promise((resolve) => (release = resolve)),
+    )
+    const first = sessions.open('d', 'd', true)
+    await sessions.open('a.txt', 'a.txt')
+    release(summary)
+    expect(await first).toBeNull()
+  })
+})

@@ -76,3 +76,17 @@ export function formatPath(fullPath: string, maxLength = 40): string {
 
   return head + tail.join('/')
 }
+
+/**
+ * Describes what a folder holds, for the folder card.
+ *
+ * @param folderCount - Number of direct child folders.
+ * @param fileCount - Number of direct child files.
+ * @returns `"Empty"`, or e.g. `"1 folder, 3 files"`, `"2 files"`, `"1 folder"`.
+ */
+export function describeContents(folderCount: number, fileCount: number): string {
+  const parts: string[] = []
+  if (folderCount > 0) parts.push(`${folderCount} ${folderCount === 1 ? 'folder' : 'folders'}`)
+  if (fileCount > 0) parts.push(`${fileCount} ${fileCount === 1 ? 'file' : 'files'}`)
+  return parts.length === 0 ? 'Empty' : parts.join(', ')
+}

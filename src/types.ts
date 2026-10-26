@@ -63,7 +63,7 @@ export interface TreeSnapshot {
   unavailableIds: ReadonlySet<string>
   /** Whether dotfiles are shown (the default) or hidden. */
   showDotfiles: boolean
-  /** Id of the selected file; `null` when nothing is selected. */
+  /** Id of the selected file or folder; `null` when nothing is selected. */
   selectedId: string | null
   /** Whether a Refresh is running. */
   refreshing: boolean
@@ -157,8 +157,10 @@ export interface TreeProps {
   showDotfiles: boolean
   /** Called to expand or collapse a folder. */
   onToggle: (id: string) => void
-  /** Called to select a file. */
+  /** Called to select a file or folder on activation (click, Enter, Space). */
   onSelect: (id: string) => void
+  /** Called when a navigation key lands on an item; selects it silently so the preview follows. */
+  onFollow: (id: string) => void
   /** Id of the selected item, or `null`. */
   selectedId: string | null
   /** Changing this value moves focus to the first row. */
@@ -189,7 +191,7 @@ export interface TreeNodeProps {
   dotfile: boolean
   /** Called to expand or collapse a folder row. */
   onToggle: (id: string) => void
-  /** Called to select a file row. */
+  /** Called to select the row (a folder row also toggles). */
   onSelect: (id: string) => void
   /** Rendered inside the row's `role="group"` (child rows or placeholders). */
   children?: ReactNode
@@ -277,11 +279,24 @@ export interface PreviewSource {
   meta: PreviewMeta
 }
 
-/** Outcome of loading the selected file's details. */
+/** What the folder card shows: the direct children of the selected folder. */
+export interface FolderSummary {
+  /** Base name of the folder. */
+  name: string
+  /** `"/"` + id, e.g. `"/documents"`. */
+  path: string
+  /** Number of direct child folders shown in the tree. */
+  folderCount: number
+  /** Number of direct child files shown in the tree. */
+  fileCount: number
+}
+
+/** Outcome of loading the selected item's details. */
 export type PreviewState =
   | { status: 'idle' }
   | { status: 'ready'; id: string; source: PreviewSource }
-  | { status: 'failed'; id: string; name: string }
+  | { status: 'folder'; id: string; summary: FolderSummary }
+  | { status: 'failed'; id: string; name: string; directory?: boolean }
 
 /** Options for `sanitize`. */
 export interface SanitizeOptions {
@@ -342,6 +357,16 @@ export interface PreviewPaneProps {
   onAnnounce: (text: string) => void
 }
 
+/** Props for the `FolderCard` component. */
+export interface FolderCardProps {
+  /** The folder's counts; `null` when it could not be listed. */
+  summary: FolderSummary | null
+  /** Folder name, used when `summary` is `null`. */
+  name: string
+  /** Id of the `h2` holding the name, when it names the preview region. */
+  titleId?: string
+}
+
 /** Props for the `PreviewHeader` component. */
 export interface PreviewHeaderProps {
   meta: PreviewMeta
@@ -373,6 +398,20 @@ export interface PreviewBoundaryProps {
 
 /** Props for the `OpenFolderPrompt` component. */
 export interface OpenFolderPromptProps {
+  /** Called when the user activates Open folder. */
+  onOpen: () => void
+}
+
+/** Props for the `EmptyPreview` component. */
+export interface EmptyPreviewProps {
+  /** Name of the open Workspace Folder; `null` when none is open. */
+  rootName: string | null
+  /** Notice about a cleared selection, or `null`. */
+  notice: string | null
+  /** Whether the Workspace Folder has no entries at all. */
+  rootEmpty: boolean
+  /** Whether every top-level entry is hidden (dotfiles off). */
+  nothingVisible: boolean
   /** Called when the user activates Open folder. */
   onOpen: () => void
 }

@@ -277,19 +277,16 @@ describe('App refresh', () => {
       expect(screen.queryByRole('treeitem', { name: /^d/ })).not.toBeInTheDocument()
     })
 
-    it('clears a selection deleted under a collapsed folder', async () => {
+    it('keeps a selected folder selected and recounts it', async () => {
       render(<App folderPickerSupported />)
       await openFolder()
-      const folder = screen.getByRole('treeitem', { name: /^d/ })
-      fireEvent.keyDown(folder, { key: 'ArrowRight' })
+      fireEvent.keyDown(screen.getByRole('treeitem', { name: /^d/ }), { key: 'ArrowRight' })
       await screen.findByRole('treeitem', { name: 'x' })
-      activate('x')
-      await screen.findByRole('region', { name: 'x' })
-      fireEvent.keyDown(screen.getByRole('treeitem', { name: /^d/ }), { key: 'ArrowLeft' })
-      await waitFor(() => expect(screen.queryByRole('treeitem', { name: 'x' })).not.toBeInTheDocument())
+      await screen.findByText('1 file')
       dEntries.splice(0)
       fireEvent.click(refreshButton())
-      await noticeText(removed('x'))
+      await screen.findByText('Empty')
+      expect(noticeEl()).not.toBeInTheDocument()
     })
 
     it('marks an expanded folder that became unreadable and keeps the rest working', async () => {
