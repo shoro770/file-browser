@@ -65,6 +65,47 @@ export interface TreeSnapshot {
   showDotfiles: boolean
   /** Id of the selected file; `null` when nothing is selected. */
   selectedId: string | null
+  /** Whether a Refresh is running. */
+  refreshing: boolean
+}
+
+/** Result of asking the store to refresh the tree. */
+export type RefreshOutcome =
+  | { status: 'refreshed'; selectionCleared: boolean }
+  | { status: 'failed' }
+  | { status: 'skipped' }
+
+/** The cached tree state that Refresh reconciles against fresh listings. */
+export interface ReconcileState {
+  items: Readonly<Record<string, FileItem>>
+  rootIds: readonly string[]
+  childIds: Readonly<Record<string, readonly string[]>>
+  expandedIds: ReadonlySet<string>
+  unavailableIds: ReadonlySet<string>
+  selectedId: string | null
+}
+
+/** Freshly read levels: the root (key `''`) and each expanded folder that could be listed. */
+export interface FreshLevels {
+  /** Children by folder id, in display order. */
+  levels: Readonly<Record<string, readonly FileItem[]>>
+  /** Expanded folders that could not be read. */
+  failed: ReadonlySet<string>
+}
+
+/** Tree state after reconciling, plus whether the Selection was dropped. */
+export interface ReconcileResult extends ReconcileState {
+  selectionCleared: boolean
+}
+
+/** Props for the `RefreshButton` component. */
+export interface RefreshButtonProps {
+  /** Whether a folder is open; the button is disabled without one. */
+  enabled: boolean
+  /** Whether a Refresh is running. */
+  refreshing: boolean
+  /** Called when the user activates Refresh. */
+  onRefresh: () => void
 }
 
 /** Result of asking the store to open a folder. */

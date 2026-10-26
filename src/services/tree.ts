@@ -4,8 +4,9 @@
  * replaces all state.
  */
 
+import { reconcile } from '../lib/reconcile'
 import { isDotfileId, parentId } from '../lib/tree'
-import type { FileItem, OpenOutcome, TreeSnapshot } from '../types'
+import type { FileItem, FreshLevels, OpenOutcome, RefreshOutcome, TreeSnapshot } from '../types'
 import { handleName, listChildren, openChildDirectory, pickDirectory, readFile } from './fs'
 import type { WorkspaceHandle } from './fs'
 import { readShowDotfiles, writeShowDotfiles } from './prefs'
@@ -23,6 +24,7 @@ const EMPTY: TreeSnapshot = {
   unavailableIds: new Set(),
   showDotfiles: true,
   selectedId: null,
+  refreshing: false,
 }
 
 let snapshot: TreeSnapshot = { ...EMPTY, showDotfiles: readShowDotfiles() }
@@ -96,6 +98,7 @@ export async function openWorkspace(): Promise<OpenOutcome> {
     unavailableIds: new Set(),
     showDotfiles: snapshot.showDotfiles,
     selectedId: null,
+    refreshing: false,
   })
   return { status: 'opened', name, count: children.length }
 }
@@ -140,6 +143,100 @@ export function setShowDotfiles(show: boolean): void {
   const { selectedId } = snapshot
   const clears = !show && selectedId !== null && isDotfileId(selectedId)
   publish({ ...snapshot, showDotfiles: show, selectedId: clears ? null : selectedId })
+}
+
+/** Fresh listings gathered by a Refresh, with the handle each folder was read through. */
+interface Gathered extends FreshLevels {
+  opened: Map<string, WorkspaceHandle>
+}
+
+/**
+ * Lists the root, then each currently expanded folder level by level (siblings in
+ * parallel), through freshly opened handles. Collapsed and in-flight folders are not read.
+ *
+ * @returns The levels, or `null` when the root itself can't be listed.
+ */
+async function gatherLevels(root: WorkspaceHandle, expanded: ReadonlySet<string>): Promise<Gathered | null> {
+  let top: FileItem[]
+  try {
+    top = await listChildren(root, '')
+  } catch {
+    return null
+  }
+  const levels: Record<string, FileItem[]> = { '': top }
+  const opened = new Map<string, WorkspaceHandle>([['', root]])
+  const failed = new Set<string>()
+  let frontier = top
+  while (frontier.length > 0) {
+    const folders = frontier.filter((item) => item.isDirectory && expanded.has(item.id) && !pending.has(item.id))
+    const results = await Promise.all(
+      folders.map(async (folder) => {
+        try {
+          const handle = await openChildDirectory(opened.get(parentId(folder.id))!, folder.name)
+          return { folder, handle, children: await listChildren(handle, folder.id) }
+        } catch {
+          return { folder, handle: null, children: null }
+        }
+      }),
+    )
+    frontier = []
+    for (const { folder, handle, children } of results) {
+      if (!handle || !children) {
+        failed.add(folder.id)
+        continue
+      }
+      levels[folder.id] = children
+      opened.set(folder.id, handle)
+      frontier.push(...children)
+    }
+  }
+  return { levels, failed, opened }
+}
+
+/**
+ * Re-reads the root and every currently expanded folder, replaces each cached level and keeps
+ * expansion and the Selection for every id that still exists (names and kinds only; no
+ * `getFile()`). Collapsed and never-expanded folders are not read, and dotfile visibility is
+ * untouched. A second call while one runs is ignored.
+ *
+ * @returns `refreshed` (with whether the Selection was cleared), `failed` when the root can't
+ * be read (state untouched), or `skipped` when nothing is open, one is already running, or a
+ * new folder replaced the tree meanwhile. Never throws.
+ */
+export async function refresh(): Promise<RefreshOutcome> {
+  const root = handles.get('')
+  if (snapshot.rootName === null || !root || snapshot.refreshing) return { status: 'skipped' }
+
+  const started = generation
+  publish({ ...snapshot, refreshing: true })
+  try {
+    const gathered = await gatherLevels(root, snapshot.expandedIds)
+    if (started !== generation) return { status: 'skipped' }
+    if (!gathered) return { status: 'failed' }
+
+    const next = reconcile(snapshot, gathered)
+    // Keep the handle of every surviving, readable folder; re-read folders get their fresh one.
+    const kept = new Map<string, WorkspaceHandle>()
+    for (const [id, handle] of handles) {
+      if (id === '' || (next.items[id]?.isDirectory && !gathered.failed.has(id))) kept.set(id, handle)
+    }
+    for (const [id, handle] of gathered.opened) if (id === '' || next.items[id]?.isDirectory) kept.set(id, handle)
+    handles = kept
+    publish({
+      ...snapshot,
+      items: next.items,
+      rootIds: next.rootIds,
+      childIds: next.childIds,
+      expandedIds: next.expandedIds,
+      unavailableIds: next.unavailableIds,
+      selectedId: next.selectedId,
+      refreshing: false,
+    })
+    return { status: 'refreshed', selectionCleared: next.selectionCleared }
+  } finally {
+    // Every path that did not publish above (failed, a throw) still ends the busy state.
+    if (started === generation && snapshot.refreshing) publish({ ...snapshot, refreshing: false })
+  }
 }
 
 /** Returns a copy of `set` with `id` added or removed. */

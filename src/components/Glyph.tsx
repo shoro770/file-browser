@@ -135,6 +135,26 @@ export function EyeSlash() {
   )
 }
 
+/** Circular arrow for Refresh. Decorative. */
+export function RefreshIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v2.75h-2.75" />
+    </svg>
+  )
+}
+
 /** A 16px inline-SVG kind glyph; decorative, so hidden from assistive technology. */
 export default function Glyph({ kind, large = false }: GlyphProps) {
   return (

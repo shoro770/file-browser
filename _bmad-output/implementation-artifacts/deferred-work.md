@@ -85,3 +85,12 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-4-lock-the-page-down-and-prove-nothing-leaves-it.md`
   summary: Decide whether `check-renderers` should also scan `src/services/` (sanitize, markdown, docx), and whether hostile-input tests should cover DOCX and spy on `fetch`/`XMLHttpRequest`/`Image` during render.
   evidence: The AC scopes the gate to `src/components/preview/`; `architecture.test.ts` already bans `fetch(` and `style=` everywhere in `src`, but `.style`, `cssText` and XHR in services are ungated (unverified low).
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-1-refresh-the-folder-tree.md`
+  summary: Decide how Refresh should treat a collapsed folder that stays cached: its levels and directory handle are not re-read, so a folder deleted and re-created under the same name keeps a stale handle until it is expanded and read again.
+  evidence: `refresh()` keeps handles for surviving cached folders and re-reads only expanded ones (AD-7: collapsed folders are not read); a stale handle would make `readItemFile` or a nested first expand fail with NotFoundError, and nothing was run against a real folder (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-1-refresh-the-folder-tree.md`
+  summary: Make Refresh notice a Selection inside a collapsed folder that was deleted; Story 4.2's `getFile()` reload and Story 4.3's clear-and-explain should cover it, so check they do.
+  evidence: Only the root and expanded folders are listed, so a selected file under a collapsed ancestor is neither checked nor cleared by Story 4.1 (unverified medium, expected to close in 4.2 and 4.3).
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-1-refresh-the-folder-tree.md`
+  summary: Run the Refresh browser check that jsdom cannot: in Chrome or Edge open a folder of about 1,000 entries, expand it, change files from a terminal, press Refresh, and confirm it stays responsive (NFR2, NFR4), Enter and Space on Refresh keep focus on the button, and the busy cursor and disabled style read well in all three themes.
+  evidence: Story 4.1 was verified only in jsdom with fake handles, which has no real folder, no layout and no timing (unverified medium).

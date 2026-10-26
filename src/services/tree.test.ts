@@ -19,7 +19,8 @@ vi.stubGlobal('window', {
   },
 })
 
-const { openWorkspace, getSnapshot, toggle, select, setShowDotfiles, subscribe, readItemFile } = await import('./tree')
+const { openWorkspace, getSnapshot, toggle, select, setShowDotfiles, subscribe, readItemFile, refresh } =
+  await import('./tree')
 const { readShowDotfiles } = await import('./prefs')
 
 describe('openWorkspace', () => {
@@ -608,5 +609,208 @@ describe('readItemFile', () => {
     const t = await open({ 'a.txt': null })
     t.getFile.mockRejectedValue(new DOMException('gone', 'NotFoundError'))
     await expect(readItemFile('a.txt')).rejects.toThrow()
+  })
+})
+
+describe('refresh', () => {
+  beforeEach(() => {
+    picker.mockReset()
+    rejectWith = null
+    vi.useRealTimers()
+  })
+
+  async function open(spec: Spec, opts: Parameters<typeof fakeTree>[2] = {}) {
+    const t = fakeTree('r', spec, opts)
+    picker.mockResolvedValue(t.root)
+    await openWorkspace()
+    return t
+  }
+
+  it('re-reads the root once and reports success when nothing changed', async () => {
+    const t = await open({ a: null })
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false })
+    expect(t.root.values).toHaveBeenCalledTimes(2)
+  })
+
+  it('reads only the root and expanded folders, with no getFile', async () => {
+    const spec: Spec = { open: { inner: { deep: null } }, shut: { x: null }, never: {}, f: null }
+    const t = await open(spec)
+    await toggle('open')
+    await toggle('open/inner')
+    await toggle('shut')
+    await toggle('shut') // collapsed, cached
+    const reads = (name: string) => t.folders[name].values.mock.calls.length
+    const before = { open: reads('open'), inner: reads('open/inner'), shut: reads('shut'), never: reads('never') }
+
+    await refresh()
+
+    expect(reads('open')).toBe(before.open + 1)
+    expect(reads('open/inner')).toBe(before.inner + 1)
+    expect(reads('shut')).toBe(before.shut)
+    expect(reads('never')).toBe(before.never)
+    expect(t.getFile).not.toHaveBeenCalled()
+  })
+
+  it('shows added and removed entries in compareFileItems order', async () => {
+    const d: Spec = { b2: null, b10: null, gone: null }
+    await open({ d })
+    await toggle('d')
+    delete d.gone
+    d.b1 = null
+    d.sub = {}
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false })
+    expect(getSnapshot().childIds.d).toEqual(['d/sub', 'd/b1', 'd/b2', 'd/b10'])
+    expect(getSnapshot().items['d/gone']).toBeUndefined()
+  })
+
+  it('keeps expansion, the selection and the dotfile setting for surviving ids', async () => {
+    await open({ d: { e: { f: null } }, '.hid': null })
+    await toggle('d')
+    await toggle('d/e')
+    select('d/e/f')
+    setShowDotfiles(false)
+    const before = getSnapshot()
+    await refresh()
+    const after = getSnapshot()
+    expect([...after.expandedIds]).toEqual([...before.expandedIds])
+    expect(after.selectedId).toBe('d/e/f')
+    expect(after.showDotfiles).toBe(false)
+    expect(readShowDotfiles()).toBe(false)
+    setShowDotfiles(true)
+  })
+
+  it('drops an expanded folder that was deleted, with its subtree and a selection inside it', async () => {
+    const spec: Spec = { d: { e: { f: null } }, keep: null }
+    await open(spec)
+    await toggle('d')
+    await toggle('d/e')
+    select('d/e/f')
+    delete spec.d
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: true })
+    const snap = getSnapshot()
+    expect(snap.rootIds).toEqual(['keep'])
+    expect(snap.expandedIds.size).toBe(0)
+    expect(snap.selectedId).toBeNull()
+    expect(Object.keys(snap.items)).toEqual(['keep'])
+    expect(snap.childIds).toEqual({})
+  })
+
+  it('treats a folder that became a file, and a file that became a folder, as different entries', async () => {
+    const spec: Spec = { d: { x: null }, f: null }
+    await open(spec)
+    await toggle('d')
+    select('f')
+    spec.d = null
+    spec.f = {}
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: true })
+    const snap = getSnapshot()
+    expect(snap.items.d.isDirectory).toBe(false)
+    expect(snap.items.f.isDirectory).toBe(true)
+    expect(snap.expandedIds.size).toBe(0)
+    expect(snap.selectedId).toBeNull()
+    expect(snap.items['d/x']).toBeUndefined()
+  })
+
+  it('reopens folder handles on every refresh and leaves collapsed caches alone', async () => {
+    const d: Spec = { a: null }
+    const t = await open({ d })
+    await toggle('d')
+    expect(t.root.getDirectoryHandle).toHaveBeenCalledTimes(1)
+    await refresh()
+    expect(t.root.getDirectoryHandle).toHaveBeenCalledTimes(2)
+    d.b = null
+    await toggle('d') // collapse
+    await refresh()
+    await toggle('d') // expand from the cache, with no read
+    expect(getSnapshot().childIds.d).toEqual(['d/a'])
+    await refresh()
+    expect(getSnapshot().childIds.d).toEqual(['d/a', 'd/b'])
+  })
+
+  it('marks an unreadable expanded folder unavailable and still refreshes the rest', async () => {
+    const ok: Spec = { y: null }
+    const fail: string[] = []
+    await open({ bad: { x: null }, ok }, { fail })
+    await toggle('bad')
+    await toggle('ok')
+    fail.push('bad')
+    ok.z = null
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false })
+    const snap = getSnapshot()
+    expect(snap.unavailableIds.has('bad')).toBe(true)
+    expect(snap.expandedIds.has('bad')).toBe(true)
+    expect(snap.childIds.ok).toEqual(['ok/y', 'ok/z'])
+    fail.pop()
+    await refresh()
+    expect(getSnapshot().unavailableIds.has('bad')).toBe(false)
+    expect(getSnapshot().childIds.bad).toEqual(['bad/x'])
+  })
+
+  it('leaves the state untouched and reports failure when the root cannot be read', async () => {
+    const fail: string[] = []
+    await open({ a: null }, { fail })
+    select('a')
+    fail.push('')
+    const before = getSnapshot()
+    expect(await refresh()).toEqual({ status: 'failed' })
+    const after = getSnapshot()
+    expect(after.refreshing).toBe(false)
+    expect({ ...after, refreshing: true }).toEqual({ ...before, refreshing: true })
+  })
+
+  it('ignores a second request while one is running, with no extra reads', async () => {
+    let release = () => {}
+    let gate: Promise<void> = Promise.resolve()
+    const t = await open({ a: null }, { delay: () => gate })
+    gate = new Promise((resolve) => {
+      release = resolve
+    })
+    const first = refresh()
+    expect(getSnapshot().refreshing).toBe(true)
+    expect(await refresh()).toEqual({ status: 'skipped' })
+    release()
+    expect(await first).toEqual({ status: 'refreshed', selectionCleared: false })
+    expect(getSnapshot().refreshing).toBe(false)
+    expect(t.root.values).toHaveBeenCalledTimes(2)
+  })
+
+  it('discards its result when a new workspace opens meanwhile', async () => {
+    let release = () => {}
+    let gate: Promise<void> = Promise.resolve()
+    await open({ old: null }, { delay: () => gate })
+    gate = new Promise((resolve) => {
+      release = resolve
+    })
+    const running = refresh()
+    await open({ fresh: null })
+    release()
+    expect(await running).toEqual({ status: 'skipped' })
+    const snap = getSnapshot()
+    expect(snap.rootIds).toEqual(['fresh'])
+    expect(snap.refreshing).toBe(false)
+  })
+
+  it('does not read a folder whose first read is still in flight', async () => {
+    let release = () => {}
+    let gate: Promise<void> = Promise.resolve()
+    const t = await open({ d: { a: null } }, { delay: () => gate })
+    gate = new Promise((resolve) => {
+      release = resolve
+    })
+    const expanding = toggle('d')
+    gate = Promise.resolve() // the refresh's own reads are not held up
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false })
+    expect(t.folders['d'].values).toHaveBeenCalledTimes(1)
+    release()
+    await expanding
+    expect(getSnapshot().childIds.d).toEqual(['d/a'])
+    expect(getSnapshot().refreshing).toBe(false)
+  })
+
+  it('keeps ids equal to their paths', async () => {
+    await open({ d: { a: null } })
+    await toggle('d')
+    await refresh()
+    expect(Object.keys(getSnapshot().items).sort()).toEqual(['d', 'd/a'])
   })
 })

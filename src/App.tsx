@@ -4,6 +4,7 @@ import HiddenFilesToggle from './components/HiddenFilesToggle'
 import OpenFolderPrompt from './components/OpenFolderPrompt'
 import PaneDivider from './components/PaneDivider'
 import PreviewPane from './components/PreviewPane'
+import RefreshButton from './components/RefreshButton'
 import Tree from './components/Tree'
 import UnsupportedBrowser from './components/UnsupportedBrowser'
 import { usePaneWidth } from './hooks/usePaneWidth'
@@ -18,14 +19,16 @@ const DENIED_MESSAGE = "Access to that folder wasn't granted. Choose a folder to
 
 /** App shell: toolbar over a tree pane and a preview pane, or the unsupported-browser screen. */
 export default function App({ folderPickerSupported }: AppProps) {
-  const { snapshot, openWorkspace, toggle, select, setShowDotfiles } = useTree()
+  const { snapshot, openWorkspace, toggle, select, refresh, setShowDotfiles } = useTree()
   const [status, setStatus] = useState('')
   const [denied, setDenied] = useState(false)
   const [focusToken, setFocusToken] = useState(0)
   const openButtonRef = useRef<HTMLButtonElement>(null)
+  const announceFrame = useRef(0)
   const pane = usePaneWidth()
 
-  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, selectedId } = snapshot
+  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, selectedId, refreshing } =
+    snapshot
   const visibleRootIds = filterDotfiles(rootIds, items, showDotfiles)
   const selectedItem = selectedId === null ? null : (items[selectedId] ?? null)
   const preview = usePreview(selectedItem)
@@ -34,14 +37,38 @@ export default function App({ folderPickerSupported }: AppProps) {
     document.title = rootName === null ? 'file-browser' : `${rootName} - file-browser`
   }, [rootName])
 
+  useEffect(() => () => cancelAnimationFrame(announceFrame.current), [])
+
   if (!folderPickerSupported) return <UnsupportedBrowser />
+
+  /** Announces text; clears the region first so an identical string is read again. */
+  function announce(text: string) {
+    cancelAnimationFrame(announceFrame.current)
+    setStatus('')
+    announceFrame.current = requestAnimationFrame(() => setStatus(text))
+  }
+
+  /** Sets the status at once, and keeps a pending `announce` from overwriting it. */
+  function say(text: string) {
+    cancelAnimationFrame(announceFrame.current)
+    setStatus(text)
+  }
+
+  async function handleRefresh() {
+    if (refreshing) return
+    announce('Refreshing...')
+    const outcome = await refresh()
+    if (outcome.status === 'skipped') return
+    if (outcome.status === 'failed') announce('')
+    else announce(outcome.selectionCleared ? 'Selection cleared' : 'Refreshed.')
+  }
 
   async function handleOpen() {
     setDenied(false)
-    setStatus('')
+    say('')
     const outcome = await openWorkspace()
     if (outcome.status === 'opened') {
-      setStatus(`Opened ${outcome.name}`)
+      say(`Opened ${outcome.name}`)
       if (outcome.count > 0) setFocusToken((token) => token + 1)
       else openButtonRef.current?.focus()
       return
@@ -53,11 +80,11 @@ export default function App({ folderPickerSupported }: AppProps) {
   function handleSelect(id: string) {
     if (id === selectedId) return
     select(id)
-    setStatus(`Previewing ${items[id].name}`)
+    say(`Previewing ${items[id].name}`)
   }
 
   function handleToggleDotfiles() {
-    if (showDotfiles && selectedId !== null && isDotfileId(selectedId)) setStatus('Selection cleared')
+    if (showDotfiles && selectedId !== null && isDotfileId(selectedId)) say('Selection cleared')
     setShowDotfiles(!showDotfiles)
   }
 
@@ -76,6 +103,7 @@ export default function App({ folderPickerSupported }: AppProps) {
           {rootName}
         </span>
         <HiddenFilesToggle shown={showDotfiles} onToggle={handleToggleDotfiles} />
+        <RefreshButton enabled={rootName !== null} refreshing={refreshing} onRefresh={handleRefresh} />
         {denied && (
           <p className="shell__alert" role="alert">
             {DENIED_MESSAGE}

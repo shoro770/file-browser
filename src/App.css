@@ -94,6 +94,19 @@
   background: var(--color-row-hover);
 }
 
+.button:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.button:disabled:hover {
+  background: transparent;
+}
+
+.button[aria-busy='true'] {
+  cursor: progress;
+}
+
 .button[aria-pressed='true'] {
   background: var(--color-row-selected);
 }
