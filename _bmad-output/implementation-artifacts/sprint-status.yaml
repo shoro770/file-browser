@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-25-2026 01:41
-last_updated: 10-26-2026 20:00
+last_updated: 10-26-2026 19:44
 project: file-browser
 project_key: NOKEY
 tracking_system: file-system
@@ -71,7 +71,7 @@ development_status:
   5-2-verify-contrast-in-all-three-themes: done
   5-3-verify-assistive-technology-and-display-modes: done
   5-4-run-the-release-verification: review
-  epic-5-retrospective: optional
+  epic-5-retrospective: done
 action_items:
   - id: "epic-1-retro-item-1-add-a-dom-test-environment-and-write-the"
     epic: 1
@@ -224,3 +224,51 @@ action_items:
     owner: "Shneor"
     status: open
     ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-10-26.md"
+  - id: "epic-5-retro-item-23-run-the-epic-5-browser-checks-from-defer"
+    epic: 5
+    action: "Run the Epic 5 browser checks from deferred-work.md (timings, UJ-2 and
+      hostile fixture, forced colors, zoom, non-Chromium screen) in Chrome/Edge, then
+      move 5-4 and epic-5 to done after build, lint and test pass"
+    owner: "Shneor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-10-26.md"
+  - id: "epic-5-retro-item-24-run-a-voiceover-nvda-pass-and-confirm-lo"
+    epic: 5
+    action: "Run a VoiceOver/NVDA pass and confirm Loading preview... is announced
+      once, not twice"
+    owner: "Shneor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-10-26.md"
+  - id: "epic-5-retro-item-25-run-bmad-review-over-8ff53f7-efdfe33-wei"
+    epic: 5
+    action: "Run bmad-review over 8ff53f7^..efdfe33 weighting the 5-3 live-region
+      change and the 5-1/5-2 token boundary"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-10-26.md"
+  - id: "epic-5-retro-item-26-reconcile-agents-md-line-16-from-filerow"
+    epic: 5
+    action: "Reconcile AGENTS.md line 16 from FileRow to TreeNode"
+    owner: "Shneor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-10-26.md"
+  - id: "epic-5-retro-item-27-decide-whether-story-spec-frontmatter-mo"
+    epic: 5
+    action: "Decide whether story spec frontmatter moves to done or sprint status
+      is authoritative, and record it"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-10-26.md"
+  - id: "epic-5-retro-item-28-write-done-to-sprint-status-yaml-only-th"
+    epic: 5
+    action: "Write done to sprint-status.yaml only through the verification step,
+      not a separate hand-made commit"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-10-26.md"
+  - id: "epic-5-retro-item-29-delete-the-unreferenced-vite-template-as"
+    epic: 5
+    action: "Delete the unreferenced Vite template assets in src/assets"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-10-26.md"
