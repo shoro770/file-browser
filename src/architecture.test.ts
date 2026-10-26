@@ -79,6 +79,70 @@ function sourceFiles(dir: string): string[] {
   })
 }
 
+/** The shell file whose size is capped. */
+const APP_FILE = 'App.tsx'
+
+/** Most lines App.tsx may have; past this, logic belongs in a hook. */
+const APP_MAX_LINES = 220
+
+/**
+ * Counts the lines in a file, ignoring the final newline.
+ * @param source - File text.
+ * @returns The number of lines, as `wc -l` would report for a newline-terminated file.
+ */
+function lineCount(source: string): number {
+  if (source === '') return 0
+  return source.replace(/\n$/, '').split('\n').length
+}
+
+/**
+ * Checks the App.tsx size cap.
+ * @param path - Path relative to `src`, with forward slashes.
+ * @param source - File text.
+ * @returns A message when the file is App.tsx and over the cap; otherwise null.
+ */
+function oversizedShell(path: string, source: string): string | null {
+  const lines = lineCount(source)
+  if (path !== APP_FILE || lines <= APP_MAX_LINES) return null
+  return `${path}: ${lines} lines exceeds ${APP_MAX_LINES}; extract logic into a hook under src/hooks/ (e.g. an announcer hook) instead of growing the shell`
+}
+
+/**
+ * Finds lint suppressions. Scans raw text because they live in comments.
+ * @param path - Path relative to `src`, with forward slashes.
+ * @param source - File text.
+ * @returns A message when the file contains `eslint-disable`; otherwise null.
+ */
+function lintSuppression(path: string, source: string): string | null {
+  return source.includes('eslint-disable') ? `${path}: eslint-disable (fix the code instead of suppressing the rule)` : null
+}
+
+describe('oversizedShell (scanner)', () => {
+  const lines = (n: number) => 'x\n'.repeat(n)
+
+  it('allows App.tsx at the cap and flags it one line over', () => {
+    expect(oversizedShell('App.tsx', lines(APP_MAX_LINES))).toBeNull()
+    expect(oversizedShell('App.tsx', lines(APP_MAX_LINES + 1))).toContain('src/hooks/')
+    expect(oversizedShell('App.tsx', lines(APP_MAX_LINES - 1) + 'x')).toBeNull()
+    expect(oversizedShell('App.tsx', lines(APP_MAX_LINES) + 'x')).not.toBeNull()
+  })
+
+  it('ignores other files', () => {
+    expect(oversizedShell('components/Tree.tsx', lines(APP_MAX_LINES + 50))).toBeNull()
+  })
+})
+
+describe('lintSuppression (scanner)', () => {
+  it('flags eslint-disable variants, including in comments', () => {
+    expect(lintSuppression('a.ts', '/* eslint-disable */')).not.toBeNull()
+    expect(lintSuppression('a.ts', 'x // eslint-disable-next-line foo')).not.toBeNull()
+  })
+
+  it('passes clean files', () => {
+    expect(lintSuppression('a.ts', 'const a = 1 // fine')).toBeNull()
+  })
+})
+
 describe('violations (scanner)', () => {
   it('flags each banned pattern', () => {
     expect(violations('components/X.tsx', '<div dangerouslySetInnerHTML={x} />')).toHaveLength(1)
@@ -135,6 +199,19 @@ describe('src architecture policy', () => {
 
   it('has no layering, object URL or unsafe-markup violations in non-test code', () => {
     const found = files.flatMap((file) => violations(relative(root, file).split(sep).join('/'), readFileSync(file, 'utf8')))
+    expect(found).toEqual([])
+  })
+
+  it('keeps App.tsx at or under the line cap', () => {
+    const source = readFileSync(join(root, APP_FILE), 'utf8')
+    expect(oversizedShell(APP_FILE, source)).toBeNull()
+  })
+
+  it('has no eslint-disable in non-test code', () => {
+    const found = files.flatMap((file) => {
+      const message = lintSuppression(relative(root, file).split(sep).join('/'), readFileSync(file, 'utf8'))
+      return message === null ? [] : [message]
+    })
     expect(found).toEqual([])
   })
 })

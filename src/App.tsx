@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Glyph from './components/Glyph'
 import HiddenFilesToggle from './components/HiddenFilesToggle'
 import OpenFolderPrompt from './components/OpenFolderPrompt'
@@ -53,13 +53,19 @@ export default function App({ folderPickerSupported }: AppProps) {
   // A changed selection drops the pending announcement ("Previewing {name}" already spoke).
   if (awaiting !== null && awaiting !== selectedId) setAwaiting(null)
 
+  /** Announces text; clears the region first so an identical string is read again. */
+  const announce = useCallback((text: string) => {
+    cancelAnimationFrame(announceFrame.current)
+    setStatus('')
+    announceFrame.current = requestAnimationFrame(() => setStatus(text))
+  }, [])
+
   const settled = awaiting !== null && preview.settledKey === refreshCount
   useEffect(() => {
     if (!settled || announcedCount.current === refreshCount) return
     announcedCount.current = refreshCount
     announce('Refreshed.')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settled, refreshCount])
+  }, [settled, refreshCount, announce])
 
   useEffect(() => {
     document.title = rootName === null ? 'file-browser' : `${rootName} - file-browser`
@@ -68,13 +74,6 @@ export default function App({ folderPickerSupported }: AppProps) {
   useEffect(() => () => cancelAnimationFrame(announceFrame.current), [])
 
   if (!folderPickerSupported) return <UnsupportedBrowser />
-
-  /** Announces text; clears the region first so an identical string is read again. */
-  function announce(text: string) {
-    cancelAnimationFrame(announceFrame.current)
-    setStatus('')
-    announceFrame.current = requestAnimationFrame(() => setStatus(text))
-  }
 
   /** Sets the status at once, and keeps a pending `announce` from overwriting it. */
   function say(text: string) {
