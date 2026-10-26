@@ -50,7 +50,8 @@ Object.assign(window, { showDirectoryPicker: async () => root })
 Object.defineProperty(document, 'adoptedStyleSheets', { value: [], writable: true })
 vi.stubGlobal('CSSStyleSheet', class { replaceSync() {} })
 
-const status = () => screen.getByRole('status')
+// The preview pane has its own status regions; this is the app's live region.
+const status = () => document.querySelector<HTMLElement>('.visually-hidden[role="status"]')!
 const refreshButton = () => screen.getByRole('button', { name: 'Refresh' })
 
 async function openFolder() {
@@ -152,5 +153,145 @@ describe('App refresh', () => {
     fireEvent.click(refreshButton())
     await waitFor(() => expect(status()).toHaveTextContent('Selection cleared'))
     expect(screen.getByText('Select a file to preview it.')).toBeInTheDocument()
+  })
+
+  describe('selected file preview', () => {
+    const text = (content: string, modified: number) =>
+      new File([content], 'a.txt', { type: 'text/plain', lastModified: modified })
+    const select = async () => {
+      fireEvent.keyDown(screen.getByRole('treeitem', { name: /a\.txt/ }), { key: 'Enter' })
+      await screen.findByRole('region', { name: /a\.txt/ })
+    }
+
+    it('shows new content and stamp, calls getFile for the Selection only, announces once', async () => {
+      getFile.mockImplementation(async () => text('old text', Date.UTC(2026, 0, 5, 12)))
+      render(<App folderPickerSupported />)
+      await openFolder()
+      await select()
+      await screen.findByText('old text')
+      const pane = document.querySelector('.preview')
+      const stamp = document.querySelector('time')!.textContent
+      expect(getFile).toHaveBeenCalledTimes(1)
+
+      getFile.mockImplementation(async () => text('new text', Date.UTC(2026, 5, 6, 12)))
+      fireEvent.click(refreshButton())
+      await screen.findByText('new text')
+      await waitFor(() => expect(status()).toHaveTextContent('Refreshed.'))
+      expect(document.querySelector('time')!.textContent).not.toBe(stamp)
+      expect(getFile).toHaveBeenCalledTimes(2)
+      expect(document.querySelector('.preview')).toBe(pane)
+    })
+
+    it('keeps the header for an unchanged file', async () => {
+      getFile.mockImplementation(async () => text('same', Date.UTC(2026, 0, 5, 12)))
+      render(<App folderPickerSupported />)
+      await openFolder()
+      await select()
+      await screen.findByText('same')
+      fireEvent.click(refreshButton())
+      await waitFor(() => expect(status()).toHaveTextContent('Refreshed.'))
+      expect(screen.getByRole('region', { name: /a\.txt/ })).toBeInTheDocument()
+      expect(screen.getByText('same')).toBeInTheDocument()
+    })
+
+    it('shows the empty card when the file became empty', async () => {
+      getFile.mockImplementation(async () => text('some', 1))
+      render(<App folderPickerSupported />)
+      await openFolder()
+      await select()
+      await screen.findByText('some')
+      getFile.mockImplementation(async () => text('', 1))
+      fireEvent.click(refreshButton())
+      await screen.findByText('This file is empty.')
+    })
+
+    it('shows a card, not the old content, when the reload rejects', async () => {
+      getFile.mockImplementation(async () => text('some', 1))
+      render(<App folderPickerSupported />)
+      await openFolder()
+      await select()
+      await screen.findByText('some')
+      getFile.mockImplementation(async () => {
+        throw new Error('gone')
+      })
+      fireEvent.click(refreshButton())
+      await waitFor(() => expect(screen.queryByText('some')).not.toBeInTheDocument())
+      expect(screen.getByRole('heading', { name: 'a.txt' })).toBeInTheDocument()
+      await waitFor(() => expect(status()).toHaveTextContent('Refreshed.'))
+    })
+
+    it('announces Refreshed. only after the reloaded preview lands', async () => {
+      getFile.mockImplementation(async () => text('old text', 1))
+      render(<App folderPickerSupported />)
+      await openFolder()
+      await select()
+      await screen.findByText('old text')
+      let release = () => {}
+      const slow = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      getFile.mockImplementation(async () => {
+        await slow
+        return text('new text', 2)
+      })
+      fireEvent.click(refreshButton())
+      await waitFor(() => expect(refreshButton()).toHaveAttribute('aria-busy', 'false'))
+      expect(screen.getByText('old text')).toBeInTheDocument()
+      expect(status()).not.toHaveTextContent('Refreshed.')
+      await act(async () => release())
+      await screen.findByText('new text')
+      await waitFor(() => expect(status()).toHaveTextContent('Refreshed.'))
+    })
+
+    it('drops the result and the announcement when another file is selected mid-reload', async () => {
+      rootEntries.push({ name: 'b.txt', kind: 'file' })
+      getFile.mockImplementation(async () => text('old text', 1))
+      render(<App folderPickerSupported />)
+      await openFolder()
+      await select()
+      await screen.findByText('old text')
+      let release = () => {}
+      const slow = new Promise<void>((resolve) => {
+        release = resolve
+      })
+      getFile.mockImplementation(async () => {
+        await slow
+        return text('late text', 2)
+      })
+      fireEvent.click(refreshButton())
+      await waitFor(() => expect(refreshButton()).toHaveAttribute('aria-busy', 'false'))
+      getFile.mockImplementation(async () => text('b text', 3))
+      fireEvent.keyDown(screen.getByRole('treeitem', { name: /b\.txt/ }), { key: 'Enter' })
+      await screen.findByText('b text')
+      await act(async () => release())
+      expect(screen.queryByText('late text')).not.toBeInTheDocument()
+      expect(status()).toHaveTextContent('Previewing b.txt')
+    })
+
+    it('announces Refreshed. again for a refresh after opening another folder', async () => {
+      getFile.mockImplementation(async () => text('some', 1))
+      render(<App folderPickerSupported />)
+      await openFolder()
+      await select()
+      await screen.findByText('some')
+      fireEvent.click(refreshButton())
+      await waitFor(() => expect(status()).toHaveTextContent('Refreshed.'))
+
+      fireEvent.click(screen.getAllByRole('button', { name: 'Open folder' })[0])
+      await waitFor(() => expect(status()).toHaveTextContent('Opened proj'))
+      await select()
+      await screen.findByText('some')
+      fireEvent.click(refreshButton())
+      await waitFor(() => expect(status()).toHaveTextContent('Refreshed.'))
+    })
+
+    it('opens no session on a refresh with no selection', async () => {
+      render(<App folderPickerSupported />)
+      await openFolder()
+      getFile.mockClear()
+      fireEvent.click(refreshButton())
+      await waitFor(() => expect(status()).toHaveTextContent('Refreshed.'))
+      expect(getFile).not.toHaveBeenCalled()
+    })
   })
 })

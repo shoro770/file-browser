@@ -27,11 +27,30 @@ export default function App({ folderPickerSupported }: AppProps) {
   const announceFrame = useRef(0)
   const pane = usePaneWidth()
 
-  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, selectedId, refreshing } =
+  const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, selectedId, refreshing, refreshCount } =
     snapshot
   const visibleRootIds = filterDotfiles(rootIds, items, showDotfiles)
   const selectedItem = selectedId === null ? null : (items[selectedId] ?? null)
-  const preview = usePreview(selectedItem)
+  const preview = usePreview(selectedItem, refreshCount)
+  // The selection whose preview a completed Refresh is waiting on before it announces "Refreshed.".
+  const [awaiting, setAwaiting] = useState<string | null>(null)
+  const selectedIdRef = useRef<string | null>(null)
+  const announcedCount = useRef(0)
+
+  useEffect(() => {
+    selectedIdRef.current = selectedId
+  })
+
+  // A changed selection drops the pending announcement ("Previewing {name}" already spoke).
+  if (awaiting !== null && awaiting !== selectedId) setAwaiting(null)
+
+  const settled = awaiting !== null && preview.settledKey === refreshCount
+  useEffect(() => {
+    if (!settled || announcedCount.current === refreshCount) return
+    announcedCount.current = refreshCount
+    announce('Refreshed.')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settled, refreshCount])
 
   useEffect(() => {
     document.title = rootName === null ? 'file-browser' : `${rootName} - file-browser`
@@ -60,7 +79,13 @@ export default function App({ folderPickerSupported }: AppProps) {
     const outcome = await refresh()
     if (outcome.status === 'skipped') return
     if (outcome.status === 'failed') announce('')
-    else announce(outcome.selectionCleared ? 'Selection cleared' : 'Refreshed.')
+    else if (outcome.selectionCleared) announce('Selection cleared')
+    else if (selectedIdRef.current === null) announce('Refreshed.')
+    else {
+      // The store resets `refreshCount` for a new folder, so forget the last announced count.
+      announcedCount.current = 0
+      setAwaiting(selectedIdRef.current)
+    }
   }
 
   async function handleOpen() {

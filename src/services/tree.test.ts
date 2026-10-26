@@ -813,4 +813,39 @@ describe('refresh', () => {
     await refresh()
     expect(Object.keys(getSnapshot().items).sort()).toEqual(['d', 'd/a'])
   })
+
+  it('bumps refreshCount once per successful refresh only', async () => {
+    const fail: string[] = []
+    const d: Spec = { a: null }
+    await open({ d }, { fail })
+    expect(getSnapshot().refreshCount).toBe(0)
+    await refresh()
+    expect(getSnapshot().refreshCount).toBe(1)
+    await toggle('d')
+    setShowDotfiles(false)
+    setShowDotfiles(true)
+    expect(getSnapshot().refreshCount).toBe(1)
+    await refresh()
+    expect(getSnapshot().refreshCount).toBe(2)
+    fail.push('')
+    expect(await refresh()).toEqual({ status: 'failed' })
+    expect(getSnapshot().refreshCount).toBe(2)
+  })
+
+  it('does not bump refreshCount for a skipped or stale refresh, and openWorkspace resets it', async () => {
+    let release = () => {}
+    let gate: Promise<void> = Promise.resolve()
+    await open({ old: null }, { delay: () => gate })
+    await refresh()
+    expect(getSnapshot().refreshCount).toBe(1)
+    gate = new Promise((resolve) => {
+      release = resolve
+    })
+    const running = refresh()
+    expect(await refresh()).toEqual({ status: 'skipped' })
+    await open({ fresh: null })
+    release()
+    expect(await running).toEqual({ status: 'skipped' })
+    expect(getSnapshot().refreshCount).toBe(0)
+  })
 })

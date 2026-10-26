@@ -328,6 +328,27 @@ describe('createPreviewSessions object URLs', () => {
     expect(urls.live.size).toBe(0)
   })
 
+  it('reopening the same id revokes the first URL and returns null for a pending first call', async () => {
+    const urls = fakeUrls()
+    const { reader, pending } = controllableReader()
+    const sessions = createPreviewSessions(reader, urls.api)
+    const first = sessions.open('a.png', 'a.png')
+    pending.get('a.png')!.resolve(file('a.png', 'x', 'image/png'))
+    await first
+    expect(urls.live.size).toBe(1)
+
+    const early = sessions.open('a.png', 'a.png')
+    expect(urls.revoked).toEqual(['blob:fake/1'])
+    const stale = pending.get('a.png')!
+    const late = sessions.open('a.png', 'a.png')
+    stale.resolve(file('a.png', 'x', 'image/png'))
+    pending.get('a.png')!.resolve(file('a.png', 'y', 'image/png'))
+    expect(await early).toBeNull()
+    const state = await late
+    expect(state?.status === 'ready' && state.source.imageUrl).toBe('blob:fake/2')
+    expect(urls.live.size).toBe(1)
+  })
+
   it('leaves no URL when the read fails', async () => {
     const urls = fakeUrls()
     const sessions = createPreviewSessions(async () => {

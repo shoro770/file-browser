@@ -94,3 +94,9 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-4-1-refresh-the-folder-tree.md`
   summary: Run the Refresh browser check that jsdom cannot: in Chrome or Edge open a folder of about 1,000 entries, expand it, change files from a terminal, press Refresh, and confirm it stays responsive (NFR2, NFR4), Enter and Space on Refresh keep focus on the button, and the busy cursor and disabled style read well in all three themes.
   evidence: Story 4.1 was verified only in jsdom with fake handles, which has no real folder, no layout and no timing (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-2-refresh-the-selected-file-s-preview.md`
+  summary: Check in Chrome or Edge that refreshing an image or PDF does not blank or flash: the session revokes the old object URL when the reload starts, while the old preview is still on screen.
+  evidence: `previewSession.open` revokes the previous URL at once (AD-10), so a PDF viewer or remounted `<img>` may point at a revoked URL during a slow reload; jsdom has no viewer or decoder (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-2-refresh-the-selected-file-s-preview.md`
+  summary: Run the Refresh preview browser check that jsdom cannot: edit open text, Markdown, DOCX, image and PDF files from a terminal, press Refresh, and confirm new content and stamp, kept scroll position and the PDF viewer reload.
+  evidence: Story 4.2 was verified only in jsdom with fake handles, which has no layout, scroll, viewer or real folder (unverified medium).

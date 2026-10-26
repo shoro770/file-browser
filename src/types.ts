@@ -67,6 +67,8 @@ export interface TreeSnapshot {
   selectedId: string | null
   /** Whether a Refresh is running. */
   refreshing: boolean
+  /** Bumped once per successful Refresh; the preview reload key. */
+  refreshCount: number
 }
 
 /** Result of asking the store to refresh the tree. */

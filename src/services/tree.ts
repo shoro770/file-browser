@@ -25,6 +25,7 @@ const EMPTY: TreeSnapshot = {
   showDotfiles: true,
   selectedId: null,
   refreshing: false,
+  refreshCount: 0,
 }
 
 let snapshot: TreeSnapshot = { ...EMPTY, showDotfiles: readShowDotfiles() }
@@ -99,6 +100,7 @@ export async function openWorkspace(): Promise<OpenOutcome> {
     showDotfiles: snapshot.showDotfiles,
     selectedId: null,
     refreshing: false,
+    refreshCount: 0,
   })
   return { status: 'opened', name, count: children.length }
 }
@@ -231,6 +233,7 @@ export async function refresh(): Promise<RefreshOutcome> {
       unavailableIds: next.unavailableIds,
       selectedId: next.selectedId,
       refreshing: false,
+      refreshCount: snapshot.refreshCount + 1,
     })
     return { status: 'refreshed', selectionCleared: next.selectionCleared }
   } finally {
