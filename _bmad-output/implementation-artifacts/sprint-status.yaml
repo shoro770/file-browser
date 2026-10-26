@@ -61,7 +61,7 @@ development_status:
   epic-3-retrospective: done
 
   epic-4: in-progress
-  4-1-refresh-the-folder-tree: review
+  4-1-refresh-the-folder-tree: done
   4-2-refresh-the-selected-file-s-preview: backlog
   4-3-handle-a-missing-selection-and-an-unreadable-folder: backlog
   epic-4-retrospective: optional
