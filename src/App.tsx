@@ -5,6 +5,7 @@ import OpenFolderPrompt from './components/OpenFolderPrompt'
 import PaneDivider from './components/PaneDivider'
 import PreviewPane from './components/PreviewPane'
 import RefreshButton from './components/RefreshButton'
+import ThemeSwitch from './components/ThemeSwitch'
 import Tree from './components/Tree'
 import UnsupportedBrowser from './components/UnsupportedBrowser'
 import { usePaneWidth } from './hooks/usePaneWidth'
@@ -153,6 +154,7 @@ export default function App({ folderPickerSupported }: AppProps) {
         </span>
         <HiddenFilesToggle shown={showDotfiles} onToggle={handleToggleDotfiles} />
         <RefreshButton enabled={rootName !== null} refreshing={refreshing} onRefresh={handleRefresh} />
+        <ThemeSwitch />
         {denied && (
           <p className="shell__alert" role="alert">
             {DENIED_MESSAGE}

@@ -1,5 +1,20 @@
+import type { Theme } from '../types'
+
 /** localStorage key for the chosen theme. */
 const THEME_KEY = 'theme'
+
+/**
+ * Stores the chosen theme. Failure (e.g. storage unavailable) is silent.
+ *
+ * @param theme - The theme to remember.
+ */
+export function writeTheme(theme: Theme): void {
+  try {
+    window.localStorage.setItem(THEME_KEY, theme)
+  } catch {
+    // Storage is optional; the choice still applies for this session.
+  }
+}
 
 /**
  * Reads the stored theme preference. Validate the result with `parseTheme`.

@@ -1,8 +1,5 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-1-app-shell-design-tokens-and-unsupported-browser-screen.md`
-  summary: Add unit tests for `parseTheme`/`resolveTheme` once the Vitest runner exists.
-  evidence: Pure theme logic has no running test; the "never default to sand" rule is pinned only by a manual check (unverified medium).
-- source_spec: `_bmad-output/implementation-artifacts/spec-1-1-app-shell-design-tokens-and-unsupported-browser-screen.md`
-  summary: Cover the `App` unsupported-browser gate and the `prefs` storage fallbacks with component and stub tests.
+  summary: Cover the `App` unsupported-browser gate with a component test (the `prefs` fallbacks are tested since Story 5.1).
   evidence: An inverted `folderPickerSupported` condition would pass build and lint; needs component-test tooling (unverified medium).
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-2-open-a-folder-and-see-its-top-level.md`
   summary: Add a DOM test environment and component tests for `Tree`/`App` (single `tabIndex=0` row, focus handoff, denied alert, persistent live region).
@@ -106,3 +103,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-4-3-handle-a-missing-selection-and-an-unreadable-folder.md`
   summary: Decide whether a Selection under a collapsed folder that was deleted and re-created should be cleared; its cached directory handle is stale, so the Refresh probe fails and the Selection is cleared with the notice.
   evidence: Refresh does not re-read collapsed folders (AD-7), so the cached handle is never replaced; the accepted default is to clear, and nothing was run against a real folder (unverified low).
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-1-switch-between-light-dark-and-warm-sand.md`
+  summary: Check the theme control in Chrome or Edge on `npm run build && npm run preview`: Tab lands on the checked radio only and the arrow keys move and select (jsdom has no radio-group keys), a visible 2px focus ring on the focused segment in all three themes, every surface (Tree, preview, notices, Markdown, DOCX, divider) follows each theme with no reload and no layout shift, the choice survives a reload and beats the OS setting, a first run follows the OS and is never Warm Sand, forced colors shows the 2px Highlight border plus the check, and the toolbar wraps sensibly at narrow widths.
+  evidence: Story 5.1 was verified only in jsdom, which has no native radio keyboard behaviour, no real focus-visible, no forced colors and no layout (unverified medium).

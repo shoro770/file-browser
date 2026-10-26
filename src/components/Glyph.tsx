@@ -155,6 +155,87 @@ export function RefreshIcon() {
   )
 }
 
+/** Sun: the Light theme. Decorative. */
+export function Sun() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="8" cy="8" r="2.75" />
+      <path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M12.6 3.4l-1 1M4.4 11.6l-1 1" />
+    </svg>
+  )
+}
+
+/** Crescent moon: the Dark theme. Decorative. */
+export function Moon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M13.5 9.5A5.75 5.75 0 0 1 6.5 2.5a5.75 5.75 0 1 0 7 7z" />
+    </svg>
+  )
+}
+
+/** Sand dunes: the Warm Sand theme. Decorative. */
+export function Dune() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M1.5 12.5c2-4 4-6 6-3.5s4 .5 7-2.5M1.5 14.5h13" />
+    </svg>
+  )
+}
+
+/** Check mark: marks the active theme segment. Decorative. */
+export function Check() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M3 8.5l3.25 3.25L13 4.75" />
+    </svg>
+  )
+}
+
 /** A 16px inline-SVG kind glyph; decorative, so hidden from assistive technology. */
 export default function Glyph({ kind, large = false }: GlyphProps) {
   return (

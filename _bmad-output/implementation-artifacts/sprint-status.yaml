@@ -66,8 +66,8 @@ development_status:
   4-3-handle-a-missing-selection-and-an-unreadable-folder: done
   epic-4-retrospective: done
 
-  epic-5: backlog
-  5-1-switch-between-light-dark-and-warm-sand: backlog
+  epic-5: in-progress
+  5-1-switch-between-light-dark-and-warm-sand: review
   5-2-verify-contrast-in-all-three-themes: backlog
   5-3-verify-assistive-technology-and-display-modes: backlog
   5-4-run-the-release-verification: backlog
