@@ -2,7 +2,7 @@
 title: 'Preview PDFs'
 type: 'feature'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 baseline_commit: '591d1a8e0aa69d63fe73ab5489316ade4eb3da23'
 route: 'dispatch'
 review_loop_iteration: 0

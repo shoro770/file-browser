@@ -2,7 +2,7 @@
 title: 'Preview text files'
 type: 'feature'
 created: '2026-10-25'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 baseline_commit: 'f1b54ac758a30662e0913da444962f3142063738'
 review_loop_iteration: 0

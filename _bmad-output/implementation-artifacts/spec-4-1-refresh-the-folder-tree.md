@@ -2,7 +2,7 @@
 title: 'Refresh the folder tree'
 type: 'feature'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 baseline_commit: 'b1d172768163c40687e9202872ec32d3bcf1972c'
 route: 'dispatch'
 review_loop_iteration: 0

@@ -2,7 +2,7 @@
 title: "See a selected file's details"
 type: 'feature'
 created: '2026-10-25'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 baseline_commit: '3cbf3ac0e249f7bc547ac357d65d033ef093d42f'
 review_loop_iteration: 0

@@ -2,7 +2,7 @@
 title: 'Verify assistive-technology and display modes'
 type: 'feature'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 baseline_commit: 'd3ddca72e920e3585b26fce7352552c420505e67'
 route: 'dispatch'
 review_loop_iteration: 0

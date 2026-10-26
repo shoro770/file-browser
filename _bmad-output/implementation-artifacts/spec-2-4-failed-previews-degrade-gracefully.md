@@ -2,7 +2,7 @@
 title: 'Failed previews degrade gracefully'
 type: 'feature'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 baseline_commit: '4494f496650036ce42617db0968cbaf6aa454a9a'
 review_loop_iteration: 0

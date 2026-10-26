@@ -2,7 +2,7 @@
 title: 'Preview Word documents'
 type: 'feature'
 created: '2026-10-26'
-status: 'review'
+status: 'done'
 baseline_commit: 'f5b982dbb38afefee5871d611effbb30994b403d'
 route: 'dispatch'
 review_loop_iteration: 0

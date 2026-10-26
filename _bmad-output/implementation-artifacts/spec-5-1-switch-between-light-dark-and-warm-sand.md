@@ -2,7 +2,7 @@
 title: 'Switch between Light, Dark and Warm Sand'
 type: 'feature'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 baseline_commit: '45d7e976137cdb01e85c30661397990ed1f35e9b'
 route: 'dispatch'
 review_loop_iteration: 0

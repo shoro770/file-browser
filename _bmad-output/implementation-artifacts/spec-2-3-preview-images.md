@@ -2,7 +2,7 @@
 title: 'Preview images'
 type: 'feature'
 created: '2026-10-25'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 baseline_commit: '8804fa67624396a7aa4020a14542672dd5e4bbdd'
 review_loop_iteration: 0

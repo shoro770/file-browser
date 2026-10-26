@@ -2,7 +2,7 @@
 title: 'Verify contrast in all three themes'
 type: 'feature'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 baseline_commit: 'fea1498c5a50875e0fa1a4e6a6e6b4021a603bde'
 route: 'dispatch'
 review_loop_iteration: 0

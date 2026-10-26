@@ -2,7 +2,7 @@
 title: 'Lock the page down and prove nothing leaves it'
 type: 'feature'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 baseline_commit: 'c9051d8bf31a2d6820059632b7166d26fe05aa3d'
 route: 'dispatch'
 review_loop_iteration: 0

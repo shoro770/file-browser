@@ -2,7 +2,7 @@
 title: 'Preview Markdown safely'
 type: 'feature'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 baseline_commit: '5d080a663bda082da8eecc20dfac8ef4718c3966'
 review_loop_iteration: 0

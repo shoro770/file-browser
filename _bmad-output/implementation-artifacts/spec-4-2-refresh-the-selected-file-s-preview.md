@@ -2,7 +2,7 @@
 title: 'Refresh the selected file''s preview'
 type: 'feature'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 baseline_commit: 'c96e12dd0ced6bd0a1933ffbeaa9403fa891efa1'
 route: 'dispatch'
 review_loop_iteration: 0
