@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-25-2026 01:41
-last_updated: 10-26-2026 06:35
+last_updated: 10-26-2026 06:55
 project: file-browser
 project_key: NOKEY
 tracking_system: file-system
@@ -58,7 +58,7 @@ development_status:
   3-2-preview-word-documents: done
   3-3-preview-pdfs: done
   3-4-lock-the-page-down-and-prove-nothing-leaves-it: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
 
   epic-4: backlog
   4-1-refresh-the-folder-tree: backlog
@@ -134,3 +134,50 @@ action_items:
     owner: "dev"
     status: open
     ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-2-retro-2026-10-26.md"
+  - id: "epic-3-retro-item-10-write-component-and-hook-tests-for-tree"
+    epic: 3
+    action: "Write component and hook tests for Tree, TreeNode, PaneDivider, usePaneWidth,
+      App and usePreview"
+    owner: "dev"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-3-retro-2026-10-26.md"
+  - id: "epic-3-retro-item-11-run-bmad-review-over-67f2545-b9a2d1b-wei"
+    epic: 3
+    action: "Run bmad-review over 67f2545^..b9a2d1b weighting the sanitizer and story
+      boundaries"
+    owner: "dev"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-3-retro-2026-10-26.md"
+  - id: "epic-3-retro-item-12-run-the-3-4-browser-check-build-preview"
+    epic: 3
+    action: "Run the 3-4 browser check (build + preview, hostile fixtures, PDF under
+      CSP, zero requests) then set epic-3 to done"
+    owner: "Shneor"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-3-retro-2026-10-26.md"
+  - id: "epic-3-retro-item-13-time-1-mb-markdown-and-5-mb-docx-decide"
+    epic: 3
+    action: "Time 1 MB Markdown and 5 MB docx; decide Worker/size cap, Suspense placeholder
+      and keyboard-scrollable pre"
+    owner: "Shneor"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-3-retro-2026-10-26.md"
+  - id: "epic-3-retro-item-14-make-git_evidence-py-read-the-story-foot"
+    epic: 3
+    action: "Make git_evidence.py read the Story footer so feature commits are attributed"
+    owner: "dev"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-3-retro-2026-10-26.md"
+  - id: "epic-3-retro-item-15-add-an-automated-initial-bundle-budget-c"
+    epic: 3
+    action: "Add an automated initial-bundle budget check (150 KB gzip initial JS)"
+    owner: "dev"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-3-retro-2026-10-26.md"
+  - id: "epic-3-retro-item-16-decide-whether-check-renderers-scans-src"
+    epic: 3
+    action: "Decide whether check-renderers scans src/services and add a hostile docx
+      test spying on fetch/XHR/Image"
+    owner: "dev"
+    status: open
+    ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-3-retro-2026-10-26.md"
