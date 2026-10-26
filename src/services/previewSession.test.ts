@@ -179,15 +179,72 @@ function fakeUrls() {
   }
 }
 
+describe('createPreviewSessions PDF URLs', () => {
+  it('creates a typed blob URL only when a PDF is selected, and no image URL', async () => {
+    const urls = fakeUrls()
+    const sessions = createPreviewSessions(async (id) => file(id, '%PDF-1.4', ''), urls.api)
+    expect(urls.created).toHaveLength(0)
+    const state = await sessions.open('a.pdf', 'a.pdf')
+    if (state?.status !== 'ready') throw new Error('expected ready')
+    expect(state.source.pdfUrl).toMatch(/^blob:/)
+    expect(state.source.imageUrl).toBeUndefined()
+    expect(urls.created).toHaveLength(1)
+    expect(urls.created[0].type).toBe('application/pdf')
+  })
+
+  it('revokes the URL at the next selection and at close, once each', async () => {
+    const urls = fakeUrls()
+    const sessions = createPreviewSessions(async (id) => file(id, '%PDF-1.4', 'application/pdf'), urls.api)
+    await sessions.open('a.pdf', 'a.pdf')
+    await sessions.open('b.pdf', 'b.pdf')
+    expect(urls.revoked).toEqual(['blob:fake/1'])
+    sessions.close()
+    sessions.close()
+    expect(urls.revoked).toEqual(['blob:fake/1', 'blob:fake/2'])
+    expect(urls.live.size).toBe(0)
+  })
+
+  it('creates no URL for a superseded session', async () => {
+    const urls = fakeUrls()
+    const { reader, pending } = controllableReader()
+    const sessions = createPreviewSessions(reader, urls.api)
+    const first = sessions.open('a.pdf', 'a.pdf')
+    const second = sessions.open('b.pdf', 'b.pdf')
+    pending.get('a.pdf')!.resolve(file('a.pdf', 'x', 'application/pdf'))
+    expect(await first).toBeNull()
+    expect(urls.created).toHaveLength(0)
+    pending.get('b.pdf')!.resolve(file('b.pdf', 'x', 'application/pdf'))
+    const state = await second
+    expect(state?.status === 'ready' && state.source.pdfUrl).toBe('blob:fake/1')
+    expect(urls.created).toHaveLength(1)
+  })
+
+  it('creates no URL for a zero-byte PDF, and turns a URL failure into a typed outcome', async () => {
+    const urls = fakeUrls()
+    const empty = createPreviewSessions(async () => file('a.pdf', '', 'application/pdf'), urls.api)
+    const card = await empty.open('a.pdf', 'a.pdf')
+    expect(card?.status === 'ready' && card.source.pdfUrl).toBeUndefined()
+    expect(urls.created).toHaveLength(0)
+
+    const broken = createPreviewSessions(async () => file('a.pdf', 'x', 'application/pdf'), {
+      createObjectURL() {
+        throw new Error('no')
+      },
+      revokeObjectURL() {},
+    })
+    expect(await broken.open('a.pdf', 'a.pdf')).toEqual({ status: 'failed', id: 'a.pdf', name: 'a.pdf' })
+  })
+})
+
 describe('createPreviewSessions object URLs', () => {
   it('creates a blob URL only for the image kind, typed from the extension', async () => {
     const urls = fakeUrls()
     const sessions = createPreviewSessions(async (id) => file(id, '<svg/>', ''), urls.api)
     const text = await sessions.open('a.txt', 'a.txt')
-    const pdf = await sessions.open('a.pdf', 'a.pdf')
+    const docx = await sessions.open('a.docx', 'a.docx')
     expect(urls.created).toHaveLength(0)
     expect(text?.status === 'ready' && text.source.imageUrl).toBeUndefined()
-    expect(pdf?.status === 'ready' && pdf.source.imageUrl).toBeUndefined()
+    expect(docx?.status === 'ready' && docx.source.pdfUrl).toBeUndefined()
 
     const image = await sessions.open('x.svg', 'x.svg')
     if (image?.status !== 'ready') throw new Error('expected ready')

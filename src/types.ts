@@ -227,6 +227,8 @@ export interface PreviewSource {
   text?: TextContent
   /** `blob:` URL for the `<img>`, set only for the `image` kind; revoked by the session. */
   imageUrl?: string
+  /** `blob:` URL for the PDF `<object>`, set only for the `pdf` kind; revoked by the session. */
+  pdfUrl?: string
   /** Aborted when a newer selection replaces this one. */
   signal: AbortSignal
   meta: PreviewMeta
@@ -252,6 +254,13 @@ export interface MarkdownPreviewProps {
 /** Props for the `DocxPreview` component. */
 export interface DocxPreviewProps {
   source: PreviewSource
+}
+
+/** Props for the `PdfPreview` component. */
+export interface PdfPreviewProps {
+  source: PreviewSource
+  /** Called when the embed reports that it could not load the PDF. */
+  onError?: () => void
 }
 
 /** Props for the `RenderedContent` component. */

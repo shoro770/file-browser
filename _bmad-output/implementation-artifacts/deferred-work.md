@@ -67,3 +67,15 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-2-preview-word-documents.md`
   summary: Decide whether `PreviewPane` should show a placeholder while the lazy Word chunk loads (the `Suspense` fallback is `null`); the chunk is much larger than the Markdown one.
   evidence: The header and the "Loading preview..." status stay, but the body is blank until the chunk arrives on first use; not measurable headlessly (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-3-preview-pdfs.md`
+  summary: Check `PdfPreview` in Chrome or Edge against `vite build` + `vite preview` with the network panel open: a multi-page PDF scrolls continuously with no controls of ours, a 20 MB PDF paints acceptably, rapid clicking leaves no stale viewer, three themes look right, Tab enters and leaves the embedded viewer, the pane scrolls without a mouse, and the `error` listener on the `<object>` ever fires for a failed load.
+  evidence: Story 3.3 was verified only in jsdom, which has no PDF viewer, no layout and fires `error` only when a test dispatches it (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-3-preview-pdfs.md`
+  summary: Decide how to show a corrupt or truncated PDF that the browser viewer reports only inside itself.
+  evidence: `<object>` rarely fires `error` for a bad PDF and detecting it ourselves needs reading the bytes (content sniffing, which Epic 2 rules out), so the pane shows the browser's own error, not the Metadata Card (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-3-preview-pdfs.md`
+  summary: Story 3.4 must test the meta CSP against the PDF embed in a real browser (`object-src blob:` versus the internal viewer frame falling back to `default-src 'self'`) and record any deviation.
+  evidence: No CSP exists yet, so nothing here can show whether the planned directives block Chromium's viewer (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-3-preview-pdfs.md`
+  summary: `PdfPreview` is lazy with a `null` Suspense fallback, so the body is blank until its tiny chunk arrives on first use; same open item as the Markdown and Word entries.
+  evidence: The header and "Loading preview..." status stay; not measurable headlessly (unverified low).

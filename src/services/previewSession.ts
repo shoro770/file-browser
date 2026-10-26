@@ -86,13 +86,18 @@ export function createPreviewSessions(read: FileReader, urls: ObjectUrls = URL):
 
       // Created here, after the last await, so a superseded session never owns a URL.
       let imageUrl: string | undefined
-      if (kind === 'image') {
+      let pdfUrl: string | undefined
+      if (kind === 'image' || kind === 'pdf') {
+        const type = kind === 'image' ? imageMimeFor(name, file.type) : 'application/pdf'
+        let url: string
         try {
-          imageUrl = urls.createObjectURL(file.slice(0, file.size, imageMimeFor(name, file.type)))
+          url = urls.createObjectURL(file.slice(0, file.size, type))
         } catch {
           return { status: 'failed', id, name }
         }
-        currentUrl = imageUrl
+        currentUrl = url
+        if (kind === 'image') imageUrl = url
+        else pdfUrl = url
       }
 
       const mime = file.type
@@ -103,6 +108,7 @@ export function createPreviewSessions(read: FileReader, urls: ObjectUrls = URL):
           file,
           ...(text && { text }),
           ...(imageUrl && { imageUrl }),
+          ...(pdfUrl && { pdfUrl }),
           signal: controller.signal,
           meta: {
             name,

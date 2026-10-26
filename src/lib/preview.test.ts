@@ -117,9 +117,16 @@ describe('rendererFor', () => {
     expect(rendererFor('image', true, false)).toBe('card')
     expect(rendererFor('image', false, false)).toBe('card')
     expect(rendererFor('text', false, true)).toBe('card')
-    for (const kind of ['pdf', 'metadata'] as const) {
-      expect(rendererFor(kind, true, true)).toBe('card')
-    }
+    expect(rendererFor('pdf', true, true)).toBe('card')
+    expect(rendererFor('metadata', true, true, true)).toBe('card')
+    expect(rendererFor('image', true, false, true)).toBe('card')
+  })
+
+  it('gives a pdf the pdf renderer only when the session made its URL', () => {
+    expect(rendererFor('pdf', false, false, true)).toBe('pdf')
+    expect(rendererFor('pdf', false, false, false)).toBe('card')
+    expect(rendererFor(resolvePreviewKind('a.pdf', '', 0), false, false, true)).toBe('card')
+    expect(rendererFor(resolvePreviewKind('a.pdf', '', 10), false, false, true)).toBe('pdf')
   })
 })
 

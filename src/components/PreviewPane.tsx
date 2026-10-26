@@ -13,17 +13,20 @@ const MarkdownPreview = lazy(() => import('./preview/MarkdownPreview'))
 /** The Word renderer and its converter load on first use (AD-9, AD-15). */
 const DocxPreview = lazy(() => import('./preview/DocxPreview'))
 
+/** The PDF renderer loads on first use too (AD-9); it has no dependency, only the embed. */
+const PdfPreview = lazy(() => import('./preview/PdfPreview'))
+
 /** Id of the header `h2` that names the preview region. */
 const TITLE_ID = 'preview-title'
 
 /** Which renderer draws a ready source; the dispatch and the announcement share it. */
-function rendererOf({ meta, text, imageUrl }: PreviewSource) {
-  return rendererFor(meta.kind, !!text, !!imageUrl)
+function rendererOf({ meta, text, imageUrl, pdfUrl }: PreviewSource) {
+  return rendererFor(meta.kind, !!text, !!imageUrl, !!pdfUrl)
 }
 
-/** Keys a renderer's boundary by source, so a new file or image URL remounts it. */
-function sourceKey(id: string, { imageUrl }: PreviewSource): string {
-  return `${id}:${imageUrl ?? ''}`
+/** Keys a renderer's boundary by source, so a new file or object URL remounts it. */
+function sourceKey(id: string, { imageUrl, pdfUrl }: PreviewSource): string {
+  return `${id}:${imageUrl ?? ''}:${pdfUrl ?? ''}`
 }
 
 /**
@@ -39,7 +42,7 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
   const renderFailed = state.status === 'ready' && failedSource === state.source
 
   useEffect(() => {
-    // Text, Markdown, Word and image previews are announced on activation only ("Previewing {name}"); cards, including a render failure, get the no-preview text.
+    // Text, Markdown, Word, PDF and image previews are announced on activation only ("Previewing {name}"); cards, including a render failure, get the no-preview text.
     if (state.status === 'ready') {
       if (renderFailed || rendererOf(state.source) === 'card') onAnnounce(`${state.source.meta.name}: no preview available`)
     } else if (state.status === 'failed') onAnnounce(`${state.name}: no preview available`)
@@ -76,6 +79,12 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
             <PreviewBoundary key={key} onFail={fail}>
               <Suspense fallback={null}>
                 <DocxPreview source={state.source} />
+              </Suspense>
+            </PreviewBoundary>
+          ) : renderer === 'pdf' ? (
+            <PreviewBoundary key={key} onFail={fail}>
+              <Suspense fallback={null}>
+                <PdfPreview source={state.source} onError={fail} />
               </Suspense>
             </PreviewBoundary>
           ) : renderer === 'image' ? (
