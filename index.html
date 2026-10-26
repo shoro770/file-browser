@@ -2,6 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      Second wall, not a guarantee: a meta CSP cannot set frame-ancestors and does not stop
+      top-level navigation. The sanitizer (services/sanitize) stays the first wall (AD-11, AD-12).
+      The dev server swaps this string for a relaxed one in vite.config.ts; only this production
+      string counts as evidence.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'none'; img-src 'self' blob: data:; object-src blob:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'"
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>file-browser</title>

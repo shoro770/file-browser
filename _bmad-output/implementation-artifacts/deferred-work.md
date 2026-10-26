@@ -79,3 +79,9 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-3-preview-pdfs.md`
   summary: `PdfPreview` is lazy with a `null` Suspense fallback, so the body is blank until its tiny chunk arrives on first use; same open item as the Markdown and Word entries.
   evidence: The header and "Loading preview..." status stay; not measurable headlessly (unverified low).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-4-lock-the-page-down-and-prove-nothing-leaves-it.md`
+  summary: Run the SM-3 and CSP browser check that Story 3.4 could not: `npm run build && npm run preview` in Chrome or Edge with Network and Console open; select a text file, PNG, `.docx`, PDF and `scripts/fixtures/hostile.md`; expect zero requests to `evil.example`, no 'Refused to' console lines, the PDF viewer rendering (else add the minimal `frame-src blob:` and record it), and all three themes applying. This also settles the 3.1, 3.2 and 3.3 browser-check entries above.
+  evidence: Chrome exists locally, but the sandbox would not let a throwaway CDP script be written outside the repo, so nothing ran in a real browser; jsdom neither loads resources nor enforces CSP (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-4-lock-the-page-down-and-prove-nothing-leaves-it.md`
+  summary: Decide whether `check-renderers` should also scan `src/services/` (sanitize, markdown, docx), and whether hostile-input tests should cover DOCX and spy on `fetch`/`XMLHttpRequest`/`Image` during render.
+  evidence: The AC scopes the gate to `src/components/preview/`; `architecture.test.ts` already bans `fetch(` and `style=` everywhere in `src`, but `.style`, `cssText` and XHR in services are ungated (unverified low).
