@@ -69,7 +69,7 @@ development_status:
   epic-5: in-progress
   5-1-switch-between-light-dark-and-warm-sand: done
   5-2-verify-contrast-in-all-three-themes: done
-  5-3-verify-assistive-technology-and-display-modes: review
+  5-3-verify-assistive-technology-and-display-modes: done
   5-4-run-the-release-verification: backlog
   epic-5-retrospective: optional
 action_items:
