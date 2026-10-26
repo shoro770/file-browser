@@ -55,7 +55,7 @@ development_status:
 
   epic-3: in-progress
   3-1-preview-markdown-safely: done
-  3-2-preview-word-documents: review
+  3-2-preview-word-documents: done
   3-3-preview-pdfs: backlog
   3-4-lock-the-page-down-and-prove-nothing-leaves-it: backlog
   epic-3-retrospective: optional
