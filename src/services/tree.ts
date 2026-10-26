@@ -197,11 +197,11 @@ async function gatherLevels(root: WorkspaceHandle, expanded: ReadonlySet<string>
 
 /**
  * Re-reads the root and every currently expanded folder, replaces each cached level and keeps
- * expansion and the Selection for every id that still exists (names and kinds only; no
- * `getFile()`). Collapsed and never-expanded folders are not read, and dotfile visibility is
+ * expansion and the Selection for every id that still exists (names and kinds only). A surviving
+ * Selection is then read once with `getFile()`; if that fails it is cleared too. Collapsed and never-expanded folders are not read, and dotfile visibility is
  * untouched. A second call while one runs is ignored.
  *
- * @returns `refreshed` (with whether the Selection was cleared), `failed` when the root can't
+ * @returns `refreshed` (with whether the Selection was cleared, and its name if so), `failed` when the root can't
  * be read (state untouched), or `skipped` when nothing is open, one is already running, or a
  * new folder replaced the tree meanwhile. Never throws.
  */
@@ -216,7 +216,25 @@ export async function refresh(): Promise<RefreshOutcome> {
     if (started !== generation) return { status: 'skipped' }
     if (!gathered) return { status: 'failed' }
 
-    const next = reconcile(snapshot, gathered)
+    let next = reconcile(snapshot, gathered)
+    // A Selection that survived the listing must still be readable; probe it once, before publishing.
+    const probedId = next.selectedId
+    let unreadable = false
+    if (probedId !== null) {
+      const parent = gathered.opened.get(parentId(probedId)) ?? handles.get(parentId(probedId))
+      try {
+        if (!parent) throw new Error('no handle')
+        await readFile(parent, next.items[probedId].name)
+      } catch {
+        unreadable = true
+      }
+      if (started !== generation) return { status: 'skipped' }
+      // The snapshot may have moved while the probe ran.
+      next = reconcile(snapshot, gathered)
+    }
+    if (unreadable && next.selectedId === probedId) next = { ...next, selectedId: null, selectionCleared: true }
+    const clearedName =
+      next.selectionCleared && snapshot.selectedId !== null ? (snapshot.items[snapshot.selectedId]?.name ?? null) : null
     // Keep the handle of every surviving, readable folder; re-read folders get their fresh one.
     const kept = new Map<string, WorkspaceHandle>()
     for (const [id, handle] of handles) {
@@ -235,7 +253,7 @@ export async function refresh(): Promise<RefreshOutcome> {
       refreshing: false,
       refreshCount: snapshot.refreshCount + 1,
     })
-    return { status: 'refreshed', selectionCleared: next.selectionCleared }
+    return { status: 'refreshed', selectionCleared: next.selectionCleared, clearedName }
   } finally {
     // Every path that did not publish above (failed, a throw) still ends the busy state.
     if (started === generation && snapshot.refreshing) publish({ ...snapshot, refreshing: false })

@@ -100,3 +100,9 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-4-2-refresh-the-selected-file-s-preview.md`
   summary: Run the Refresh preview browser check that jsdom cannot: edit open text, Markdown, DOCX, image and PDF files from a terminal, press Refresh, and confirm new content and stamp, kept scroll position and the PDF viewer reload.
   evidence: Story 4.2 was verified only in jsdom with fake handles, which has no layout, scroll, viewer or real folder (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-3-handle-a-missing-selection-and-an-unreadable-folder.md`
+  summary: Run the Refresh failure browser check that jsdom cannot: in Chrome or Edge delete the open file, its parent folder, a file under a collapsed folder and an expanded folder from a terminal (and revoke the folder's permission), press Refresh, and confirm the notice above the prompt, the mirrored status, the inline access alert, the Unavailable folder, focus staying on Refresh and a single tab stop.
+  evidence: Story 4.3 was verified only in jsdom with fake handles, which has no real deletion, permission revocation, layout or screen reader (unverified medium).
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-3-handle-a-missing-selection-and-an-unreadable-folder.md`
+  summary: Decide whether a Selection under a collapsed folder that was deleted and re-created should be cleared; its cached directory handle is stale, so the Refresh probe fails and the Selection is cleared with the notice.
+  evidence: Refresh does not re-read collapsed folders (AD-7), so the cached handle is never replaced; the accepted default is to clear, and nothing was run against a real folder (unverified low).

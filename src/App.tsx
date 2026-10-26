@@ -17,11 +17,20 @@ import './App.css'
 /** Shown when the picker rejects for any reason other than the user cancelling. */
 const DENIED_MESSAGE = "Access to that folder wasn't granted. Choose a folder to try again."
 
+/**
+ * Builds the notice shown above the prompt when Refresh cleared a Selection that is gone or unreadable.
+ *
+ * @param name - Name of the file that was selected.
+ * @returns The message, also mirrored into the status region.
+ */
+const missingMessage = (name: string) => `${name} was removed or can no longer be read, so the selection was cleared.`
+
 /** App shell: toolbar over a tree pane and a preview pane, or the unsupported-browser screen. */
 export default function App({ folderPickerSupported }: AppProps) {
   const { snapshot, openWorkspace, toggle, select, refresh, setShowDotfiles } = useTree()
   const [status, setStatus] = useState('')
   const [denied, setDenied] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
   const [focusToken, setFocusToken] = useState(0)
   const openButtonRef = useRef<HTMLButtonElement>(null)
   const announceFrame = useRef(0)
@@ -75,12 +84,19 @@ export default function App({ folderPickerSupported }: AppProps) {
 
   async function handleRefresh() {
     if (refreshing) return
+    setDenied(false)
     announce('Refreshing...')
     const outcome = await refresh()
     if (outcome.status === 'skipped') return
-    if (outcome.status === 'failed') announce('')
-    else if (outcome.selectionCleared) announce('Selection cleared')
-    else if (selectedIdRef.current === null) announce('Refreshed.')
+    if (outcome.status === 'failed') {
+      // Nothing is cleared; the same inline alert as a refused folder picker.
+      announce('')
+      setDenied(true)
+    } else if (outcome.selectionCleared) {
+      const message = missingMessage(outcome.clearedName ?? 'The selected file')
+      setNotice(message)
+      announce(message)
+    } else if (selectedIdRef.current === null) announce('Refreshed.')
     else {
       // The store resets `refreshCount` for a new folder, so forget the last announced count.
       announcedCount.current = 0
@@ -93,6 +109,7 @@ export default function App({ folderPickerSupported }: AppProps) {
     say('')
     const outcome = await openWorkspace()
     if (outcome.status === 'opened') {
+      setNotice(null)
       say(`Opened ${outcome.name}`)
       if (outcome.count > 0) setFocusToken((token) => token + 1)
       else openButtonRef.current?.focus()
@@ -104,11 +121,19 @@ export default function App({ folderPickerSupported }: AppProps) {
 
   function handleSelect(id: string) {
     if (id === selectedId) return
+    setDenied(false)
+    setNotice(null)
     select(id)
     say(`Previewing ${items[id].name}`)
   }
 
+  function handleToggle(id: string) {
+    setDenied(false)
+    toggle(id)
+  }
+
   function handleToggleDotfiles() {
+    setDenied(false)
     if (showDotfiles && selectedId !== null && isDotfileId(selectedId)) say('Selection cleared')
     setShowDotfiles(!showDotfiles)
   }
@@ -146,7 +171,7 @@ export default function App({ folderPickerSupported }: AppProps) {
             loadingIds={loadingIds}
             unavailableIds={unavailableIds}
             showDotfiles={showDotfiles}
-            onToggle={toggle}
+            onToggle={handleToggle}
             onSelect={handleSelect}
             selectedId={selectedId}
             focusToken={focusToken}
@@ -166,6 +191,7 @@ export default function App({ folderPickerSupported }: AppProps) {
           <PreviewPane state={preview.state} now={preview.now} loading={preview.loading} onAnnounce={setStatus} />
         ) : (
           <div className="preview" role="region" aria-label="Preview">
+            {rootName !== null && notice !== null && <p className="preview__notice">{notice}</p>}
             {rootName === null ? (
               <OpenFolderPrompt onOpen={handleOpen} />
             ) : rootIds.length === 0 ? (

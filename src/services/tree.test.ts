@@ -628,7 +628,7 @@ describe('refresh', () => {
 
   it('re-reads the root once and reports success when nothing changed', async () => {
     const t = await open({ a: null })
-    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false })
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false, clearedName: null })
     expect(t.root.values).toHaveBeenCalledTimes(2)
   })
 
@@ -658,7 +658,7 @@ describe('refresh', () => {
     delete d.gone
     d.b1 = null
     d.sub = {}
-    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false })
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false, clearedName: null })
     expect(getSnapshot().childIds.d).toEqual(['d/sub', 'd/b1', 'd/b2', 'd/b10'])
     expect(getSnapshot().items['d/gone']).toBeUndefined()
   })
@@ -686,7 +686,7 @@ describe('refresh', () => {
     await toggle('d/e')
     select('d/e/f')
     delete spec.d
-    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: true })
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: true, clearedName: 'f' })
     const snap = getSnapshot()
     expect(snap.rootIds).toEqual(['keep'])
     expect(snap.expandedIds.size).toBe(0)
@@ -702,7 +702,7 @@ describe('refresh', () => {
     select('f')
     spec.d = null
     spec.f = {}
-    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: true })
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: true, clearedName: 'f' })
     const snap = getSnapshot()
     expect(snap.items.d.isDirectory).toBe(false)
     expect(snap.items.f.isDirectory).toBe(true)
@@ -735,7 +735,7 @@ describe('refresh', () => {
     await toggle('ok')
     fail.push('bad')
     ok.z = null
-    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false })
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false, clearedName: null })
     const snap = getSnapshot()
     expect(snap.unavailableIds.has('bad')).toBe(true)
     expect(snap.expandedIds.has('bad')).toBe(true)
@@ -769,7 +769,7 @@ describe('refresh', () => {
     expect(getSnapshot().refreshing).toBe(true)
     expect(await refresh()).toEqual({ status: 'skipped' })
     release()
-    expect(await first).toEqual({ status: 'refreshed', selectionCleared: false })
+    expect(await first).toEqual({ status: 'refreshed', selectionCleared: false, clearedName: null })
     expect(getSnapshot().refreshing).toBe(false)
     expect(t.root.values).toHaveBeenCalledTimes(2)
   })
@@ -799,12 +799,103 @@ describe('refresh', () => {
     })
     const expanding = toggle('d')
     gate = Promise.resolve() // the refresh's own reads are not held up
-    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false })
+    expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false, clearedName: null })
     expect(t.folders['d'].values).toHaveBeenCalledTimes(1)
     release()
     await expanding
     expect(getSnapshot().childIds.d).toEqual(['d/a'])
     expect(getSnapshot().refreshing).toBe(false)
+  })
+
+  describe('selection probe', () => {
+    it('reads only the Selection, once, and keeps it when readable', async () => {
+      const t = await open({ a: null, b: null })
+      select('a')
+      expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false, clearedName: null })
+      expect(t.getFile).toHaveBeenCalledTimes(1)
+      expect(getSnapshot().selectedId).toBe('a')
+    })
+
+    it('clears a Selection that was deleted and names it', async () => {
+      const spec: Spec = { a: null, b: null }
+      await open(spec)
+      select('a')
+      delete spec.a
+      expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: true, clearedName: 'a' })
+      expect(getSnapshot().selectedId).toBeNull()
+    })
+
+    it('clears a listed Selection whose file can no longer be read, keeping its row', async () => {
+      const t = await open({ a: null })
+      select('a')
+      t.getFile.mockRejectedValue(new DOMException('denied', 'NotAllowedError'))
+      expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: true, clearedName: 'a' })
+      expect(getSnapshot().selectedId).toBeNull()
+      expect(getSnapshot().items.a).toBeDefined()
+    })
+
+    it('clears a Selection under a collapsed folder that was deleted', async () => {
+      const spec: Spec = { d: { f: null }, keep: null }
+      await open(spec)
+      await toggle('d')
+      select('d/f')
+      await toggle('d') // collapse
+      delete spec.d!.f
+      expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: true, clearedName: 'f' })
+      expect(getSnapshot().selectedId).toBeNull()
+    })
+
+    it('keeps a Selection whose path was replaced by a new file', async () => {
+      const t = await open({ a: null })
+      select('a')
+      t.getFile.mockResolvedValue(new File(['new'], 'a'))
+      expect(await refresh()).toEqual({ status: 'refreshed', selectionCleared: false, clearedName: null })
+      expect(getSnapshot().selectedId).toBe('a')
+    })
+
+    it('ignores a probe that finishes after a new workspace opened', async () => {
+      const t = await open({ a: null })
+      select('a')
+      let release = () => {}
+      t.getFile.mockReturnValue(
+        new Promise((resolve) => {
+          release = () => resolve(new File([''], 'a'))
+        }),
+      )
+      const running = refresh()
+      await vi.waitFor(() => expect(t.getFile).toHaveBeenCalled())
+      await open({ fresh: null })
+      release()
+      expect(await running).toEqual({ status: 'skipped' })
+      expect(getSnapshot().rootIds).toEqual(['fresh'])
+    })
+
+    it('keeps a file selected while the probe of the old Selection runs', async () => {
+      const t = await open({ a: null, b: null })
+      select('a')
+      let fail = () => {}
+      t.getFile.mockReturnValue(
+        new Promise((_resolve, reject) => {
+          fail = () => reject(new DOMException('gone', 'NotFoundError'))
+        }),
+      )
+      const running = refresh()
+      await vi.waitFor(() => expect(t.getFile).toHaveBeenCalled())
+      select('b')
+      fail()
+      expect(await running).toEqual({ status: 'refreshed', selectionCleared: false, clearedName: null })
+      expect(getSnapshot().selectedId).toBe('b')
+    })
+
+    it('does not probe when the root cannot be read', async () => {
+      const fail: string[] = []
+      const t = await open({ a: null }, { fail })
+      select('a')
+      fail.push('')
+      expect(await refresh()).toEqual({ status: 'failed' })
+      expect(t.getFile).not.toHaveBeenCalled()
+      expect(getSnapshot().selectedId).toBe('a')
+    })
   })
 
   it('keeps ids equal to their paths', async () => {

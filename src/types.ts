@@ -73,7 +73,7 @@ export interface TreeSnapshot {
 
 /** Result of asking the store to refresh the tree. */
 export type RefreshOutcome =
-  | { status: 'refreshed'; selectionCleared: boolean }
+  | { status: 'refreshed'; selectionCleared: boolean; clearedName: string | null }
   | { status: 'failed' }
   | { status: 'skipped' }
 
