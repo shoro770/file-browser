@@ -26,6 +26,7 @@ The user switches among Light, Dark and Warm Sand, and the choice is remembered.
 - A theme is a set of CSS custom properties selected by `data-theme` on `<html>`. Components consume tokens only; no component CSS branches on theme.
 - `src/lib/theme.ts` (`parseTheme`, `resolveTheme`), `services/prefs` (`readTheme`, `systemPrefersDark`) and the three token blocks in `index.css` exist already. `main.tsx` sets the first theme before render.
 - Layering: components reach services only through `hooks/`. `App.tsx` is capped at 220 lines and must not gain state, effects or refs; the theme control lives in its own hook and component.
+- Contrast is proven by tests that read the real `--color-*` values from `src/index.css` and compute WCAG 2.1 ratios with a pure `lib/` function. A failing token is corrected in the stylesheet, never by weakening a test.
 - Announcements go to the single polite `role="status"` region; the theme radio relies on native checked-state announcement.
 
 ## UX & Interaction Patterns
