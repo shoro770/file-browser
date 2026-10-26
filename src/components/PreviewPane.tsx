@@ -5,6 +5,7 @@ import MetadataCard from './MetadataCard'
 import PreviewHeader from './PreviewHeader'
 import ImagePreview from './preview/ImagePreview'
 import PreviewBoundary from './preview/PreviewBoundary'
+import PreviewLoading from './preview/PreviewLoading'
 import TextPreview from './preview/TextPreview'
 
 /** The Markdown renderer and its parser and sanitizer load on first use (AD-9, AD-15). */
@@ -71,19 +72,19 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
             </PreviewBoundary>
           ) : renderer === 'markdown' ? (
             <PreviewBoundary key={key} onFail={fail}>
-              <Suspense fallback={null}>
+              <Suspense fallback={<PreviewLoading />}>
                 <MarkdownPreview source={state.source} />
               </Suspense>
             </PreviewBoundary>
           ) : renderer === 'docx' ? (
             <PreviewBoundary key={key} onFail={fail}>
-              <Suspense fallback={null}>
+              <Suspense fallback={<PreviewLoading />}>
                 <DocxPreview source={state.source} />
               </Suspense>
             </PreviewBoundary>
           ) : renderer === 'pdf' ? (
             <PreviewBoundary key={key} onFail={fail}>
-              <Suspense fallback={null}>
+              <Suspense fallback={<PreviewLoading />}>
                 <PdfPreview source={state.source} onError={fail} />
               </Suspense>
             </PreviewBoundary>

@@ -6,6 +6,15 @@ import { describe, expect, it } from 'vitest'
 /** The only file allowed to create or revoke object URLs. */
 const URL_OWNER = 'services/previewSession.ts'
 
+/** The only file allowed to put parsed HTML into the DOM. */
+const SANITIZE_OWNER = 'services/sanitize.ts'
+
+/** Ways to insert or parse markup that must go through the sanitize chokepoint. */
+const MARKUP_SINKS = /\b(insertAdjacentHTML|outerHTML|createContextualFragment|DOMParser)\b|\bdocument\s*\.\s*write(ln)?\s*\(/
+
+/** The attributes of each `<Suspense ...>` opening tag (arrow functions and `=>` tolerated). */
+const SUSPENSE_TAG = /<Suspense\b((?:[^>]|=>)*)>/g
+
 /** Patterns that must not appear in non-test source, with the reason shown on failure. */
 const BANNED: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bdangerouslySetInnerHTML\b/, 'dangerouslySetInnerHTML'],
@@ -38,7 +47,23 @@ function violations(path: string, source: string): string[] {
   if (path !== URL_OWNER && /\b(createObjectURL|revokeObjectURL)\b/.test(code)) {
     found.push(`${path}: object URL call outside ${URL_OWNER}`)
   }
+  if (path !== SANITIZE_OWNER && MARKUP_SINKS.test(code)) {
+    found.push(`${path}: markup inserted or parsed outside ${SANITIZE_OWNER}`)
+  }
+  if (path.startsWith('components/') && blankSuspense(code)) found.push(`${path}: Suspense without a visible fallback`)
   return found
+}
+
+/**
+ * Tells whether any `<Suspense>` in the code lacks a visible fallback.
+ * @param code - Comment-free file text.
+ * @returns True when a Suspense has no `fallback`, or a `null` or `undefined` one.
+ */
+function blankSuspense(code: string): boolean {
+  for (const [, attrs] of code.matchAll(SUSPENSE_TAG)) {
+    if (!/\bfallback\s*=/.test(attrs) || /\bfallback\s*=\s*\{\s*(null|undefined)\s*\}/.test(attrs)) return true
+  }
+  return false
 }
 
 /**
@@ -73,6 +98,26 @@ describe('violations (scanner)', () => {
     const src = 'const u = URL.createObjectURL(blob); URL.revokeObjectURL(u)'
     expect(violations(URL_OWNER, src)).toHaveLength(0)
     expect(violations('components/ImagePreview.tsx', src)).toHaveLength(1)
+  })
+
+  it('flags a Suspense with a null, undefined or omitted fallback in components', () => {
+    expect(violations('components/X.tsx', '<Suspense fallback={null}><A /></Suspense>')).toHaveLength(1)
+    expect(violations('components/X.tsx', '<Suspense fallback={ undefined }><A /></Suspense>')).toHaveLength(1)
+    expect(violations('components/X.tsx', '<Suspense><A /></Suspense>')).toHaveLength(1)
+    expect(violations('components/X.tsx', '<Suspense fallback={<PreviewLoading />}><A /></Suspense>')).toHaveLength(0)
+  })
+
+  it('flags markup sinks outside sanitize', () => {
+    for (const src of [
+      "el.insertAdjacentHTML('beforeend', h)",
+      'el.outerHTML = h',
+      'document.write(h)',
+      'range.createContextualFragment(h)',
+      "new DOMParser().parseFromString(h, 'text/html')",
+    ]) {
+      expect(violations('components/X.tsx', src)).toHaveLength(1)
+      expect(violations(SANITIZE_OWNER, src)).toHaveLength(0)
+    }
   })
 
   it('ignores comments', () => {
