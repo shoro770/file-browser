@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-25-2026 01:41
-last_updated: 10-26-2026 13:00
+last_updated: 10-26-2026 07:45
 project: file-browser
 project_key: NOKEY
 tracking_system: file-system
@@ -64,7 +64,7 @@ development_status:
   4-1-refresh-the-folder-tree: done
   4-2-refresh-the-selected-file-s-preview: done
   4-3-handle-a-missing-selection-and-an-unreadable-folder: done
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
 
   epic-5: backlog
   5-1-switch-between-light-dark-and-warm-sand: backlog
@@ -181,3 +181,46 @@ action_items:
     owner: "dev"
     status: open
     ref: "/Users/shalom/dev-projects/file-browser/_bmad-output/implementation-artifacts/epic-3-retro-2026-10-26.md"
+  - id: "epic-4-retro-item-17-write-tree-and-treenode-component-tests"
+    epic: 4
+    action: "Write Tree and TreeNode component tests (single tab stop, aria contract,
+      tab-stop repair priority order), then PaneDivider and usePaneWidth"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-10-26.md"
+  - id: "epic-4-retro-item-18-run-the-epic-4-browser-check-1-000-entri"
+    epic: 4
+    action: "Run the Epic 4 browser check (1,000 entries, preview reload without flash,
+      scroll kept, real deletion and permission revocation, focus on Refresh) then
+      set epic-4 to done"
+    owner: "Shneor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-10-26.md"
+  - id: "epic-4-retro-item-19-extract-the-refresh-announcement-state-f"
+    epic: 4
+    action: "Extract the Refresh announcement state from App.tsx into a hook before
+      Epic 5 and resolve the eslint-disable"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-10-26.md"
+  - id: "epic-4-retro-item-20-make-git_evidence-py-read-the-story-foot"
+    epic: 4
+    action: "Make git_evidence.py read the Story footer so feature commits are attributed
+      (third retro in a row)"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-10-26.md"
+  - id: "epic-4-retro-item-21-run-bmad-review-over-83374c7-623e729-wei"
+    epic: 4
+    action: "Run bmad-review over 83374c7^..623e729 weighting the 4-1/4-2 refreshCount
+      boundary and the refresh finally block"
+    owner: "dev"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-10-26.md"
+  - id: "epic-4-retro-item-22-decide-whether-the-unreadable-root-messa"
+    epic: 4
+    action: "Decide whether the unreadable-root message should differ from the picker-refusal
+      message and reconcile epics.md and DENIED_MESSAGE"
+    owner: "Shneor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-10-26.md"
