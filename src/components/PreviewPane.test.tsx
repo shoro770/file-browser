@@ -50,11 +50,14 @@ describe('PreviewPane region', () => {
     expect(region).not.toHaveAttribute('aria-labelledby')
   })
 
-  it('shows "Loading preview..." in a status region only while loading', async () => {
-    const { rerender, props } = await show({ status: 'idle' }, vi.fn(), true)
-    expect(screen.getByRole('status')).toHaveTextContent('Loading preview...')
+  it('shows "Loading preview..." only while loading, announces it and is not a live region', async () => {
+    const onAnnounce = vi.fn()
+    const { rerender, props } = await show({ status: 'idle' }, onAnnounce, true)
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.getByText('Loading preview...')).toBeInTheDocument()
+    expect(onAnnounce).toHaveBeenCalledWith('Loading preview...')
     await act(async () => rerender(<PreviewPane {...props} loading={false} />))
-    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+    expect(screen.queryByText('Loading preview...')).not.toBeInTheDocument()
   })
 })
 
@@ -76,7 +79,8 @@ describe('PreviewPane renderers and announcements', () => {
     const { onAnnounce } = await show(ready(makeSource('s.md', 'markdown', { text: text('# Spec\n\ntext') })))
     expect(await screen.findByRole('heading', { level: 1, name: 'Spec' })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 's.md' })).toHaveAttribute('tabindex', '0')
-    expect(onAnnounce).not.toHaveBeenCalled()
+    // Only the lazy chunk's loading fallback may speak; never card text.
+    expect(onAnnounce.mock.calls.flat().filter((text) => text !== 'Loading preview...')).toEqual([])
   })
 
   it('announces a kind without a renderer as a card, once', async () => {
@@ -106,7 +110,7 @@ describe('PreviewPane failures', () => {
     expect(region).toHaveAttribute('tabindex', '0')
     expect(region).toHaveAttribute('aria-labelledby', 'preview-title')
     expect(onAnnounce).toHaveBeenCalledWith('s.md: no preview available')
-    expect(onAnnounce).toHaveBeenCalledTimes(1)
+    expect(onAnnounce.mock.calls.flat().filter((text) => text === 's.md: no preview available')).toHaveLength(1)
   })
 
   it('shows the card when an image cannot be decoded', async () => {

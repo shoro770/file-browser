@@ -49,6 +49,11 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
     } else if (state.status === 'failed') onAnnounce(`${state.name}: no preview available`)
   }, [state, renderFailed, onAnnounce])
 
+  // The visible text below is not a live region; the single status region speaks it (UX-DR22).
+  useEffect(() => {
+    if (loading) onAnnounce('Loading preview...')
+  }, [loading, onAnnounce])
+
   const named = state.status === 'ready'
   const renderer = state.status === 'ready' && !renderFailed ? rendererOf(state.source) : 'card'
   // Bound to this source: a late failure from an old source cannot fail the new one.
@@ -72,19 +77,19 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
             </PreviewBoundary>
           ) : renderer === 'markdown' ? (
             <PreviewBoundary key={key} onFail={fail}>
-              <Suspense fallback={<PreviewLoading />}>
+              <Suspense fallback={<PreviewLoading onAnnounce={onAnnounce} />}>
                 <MarkdownPreview source={state.source} />
               </Suspense>
             </PreviewBoundary>
           ) : renderer === 'docx' ? (
             <PreviewBoundary key={key} onFail={fail}>
-              <Suspense fallback={<PreviewLoading />}>
+              <Suspense fallback={<PreviewLoading onAnnounce={onAnnounce} />}>
                 <DocxPreview source={state.source} />
               </Suspense>
             </PreviewBoundary>
           ) : renderer === 'pdf' ? (
             <PreviewBoundary key={key} onFail={fail}>
-              <Suspense fallback={<PreviewLoading />}>
+              <Suspense fallback={<PreviewLoading onAnnounce={onAnnounce} />}>
                 <PdfPreview source={state.source} onError={fail} />
               </Suspense>
             </PreviewBoundary>
@@ -104,8 +109,7 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
           <MetadataCard meta={null} name={state.name} now={now} />
         </div>
       )}
-      {/* Always mounted, so assistive technology sees the text change instead of a new element. */}
-      <p className="preview__loading" role="status">
+      <p className="preview__loading">
         {loading ? 'Loading preview...' : ''}
       </p>
     </div>

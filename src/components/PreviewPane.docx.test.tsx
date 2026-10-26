@@ -39,7 +39,7 @@ describe('PreviewPane Word documents', () => {
     const region = screen.getByRole('region', { name: 'summary.docx' })
     expect(region).toHaveAttribute('tabindex', '0')
     expect(region).toHaveAttribute('aria-labelledby', 'preview-title')
-    expect(onAnnounce).not.toHaveBeenCalled()
+    expect(onAnnounce.mock.calls.flat().filter((text) => text !== 'Loading preview...')).toEqual([])
   })
 
   it('shows the card with the failure text for a damaged docx, never the error, and announces it once', async () => {
@@ -48,7 +48,7 @@ describe('PreviewPane Word documents', () => {
     expect(screen.queryByText(/zip|Could not find|corrupt/i)).toBeNull()
     expect(screen.getByRole('region', { name: 'broken.docx' })).toHaveAttribute('tabindex', '0')
     expect(onAnnounce).toHaveBeenCalledWith('broken.docx: no preview available')
-    expect(onAnnounce).toHaveBeenCalledTimes(1)
+    expect(onAnnounce.mock.calls.flat().filter((text) => text !== 'Loading preview...')).toHaveLength(1)
   })
 
   it('retries when the same file is selected again (a new source object)', async () => {

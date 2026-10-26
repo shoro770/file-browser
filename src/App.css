@@ -736,3 +736,25 @@
     transition: none;
   }
 }
+
+/* Forced colors: system colours only. The 2px focus outline on a focused row outranks the 1px selected outline. */
+@media (forced-colors: active) {
+  .tree-row.is-selected {
+    border-inline-start-color: Highlight;
+    outline: 1px solid Highlight;
+  }
+
+  .button:disabled,
+  .tree-row--placeholder {
+    color: GrayText;
+  }
+
+  .truncation-banner,
+  .preview__notice {
+    border-block-end-color: CanvasText;
+  }
+
+  .blocked-resource {
+    border-color: CanvasText;
+  }
+}

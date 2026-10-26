@@ -55,7 +55,7 @@ describe('PreviewPane PDFs', () => {
     expect(region).toHaveAttribute('aria-labelledby', 'preview-title')
     expect(region).toContainElement(object)
     expect(screen.queryByText(/This file couldn't be previewed/)).toBeNull()
-    expect(onAnnounce).not.toHaveBeenCalled()
+    expect(onAnnounce.mock.calls.flat().filter((text) => text !== 'Loading preview...')).toEqual([])
   })
 
   it('works under StrictMode', async () => {
