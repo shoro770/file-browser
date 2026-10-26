@@ -70,7 +70,7 @@ development_status:
   5-1-switch-between-light-dark-and-warm-sand: done
   5-2-verify-contrast-in-all-three-themes: done
   5-3-verify-assistive-technology-and-display-modes: done
-  5-4-run-the-release-verification: review
+  5-4-run-the-release-verification: done
   epic-5-retrospective: optional
 action_items:
   - id: "epic-1-retro-item-1-add-a-dom-test-environment-and-write-the"
