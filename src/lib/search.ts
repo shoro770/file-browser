@@ -27,7 +27,7 @@ function wildcardSource(pattern: string): string {
 
 /**
  * Compiles a query into a name matcher. Case-insensitive "contains" by default. With `regex` off,
- * `*` and `?` are wildcards and the pattern then matches the whole name; with `regex` on the
+ * `*` and `?` are wildcards inside the same "contains" match (`file*br` finds `file-browser`); with `regex` on the
  * query is a JavaScript regular expression. `wholeWord` requires non-alphanumerics (or the name
  * ends) on both sides of a contains or regex match.
  *
@@ -37,13 +37,11 @@ function wildcardSource(pattern: string): string {
  */
 export function compileMatcher(query: string, options: SearchOptions): CompiledSearch {
   let source: string
-  let wholeName = false
   if (options.regex) source = query
   else if (/[*?]/.test(query)) {
-    source = `^(?:${wildcardSource(query)})$`
-    wholeName = true
+    source = wildcardSource(query)
   } else source = escapeRegex(query)
-  if (options.wholeWord && !wholeName) source = `(?<![A-Za-z0-9])(?:${source})(?![A-Za-z0-9])`
+  if (options.wholeWord) source = `(?<![A-Za-z0-9])(?:${source})(?![A-Za-z0-9])`
   const flags = options.matchCase ? '' : 'i'
   let test: RegExp
   let global: RegExp

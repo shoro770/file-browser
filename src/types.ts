@@ -495,6 +495,8 @@ export interface SearchBoxProps {
   onOptionsChange: (options: SearchOptions) => void
   /** Called to clear the query (Escape or the clear button). */
   onClear: () => void
+  /** Called on ArrowDown or Enter in the box, to move focus to the results. */
+  onFocusResults: () => void
 }
 
 /** Props for the `SearchPanel` component. */

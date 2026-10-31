@@ -20,10 +20,11 @@ describe('compileMatcher', () => {
     expect(accepted('read', ['README.md', 'read.md'], { matchCase: true })).toEqual(['read.md'])
   })
 
-  it('wildcards match the whole name', () => {
-    expect(accepted('*.test.ts', ['a.test.ts', 'a.test.tsx', 'x.test.ts.bak'])).toEqual(['a.test.ts'])
-    expect(accepted('a?c', ['abc', 'abcd', 'ac'])).toEqual(['abc'])
+  it('wildcards match inside the name', () => {
+    expect(accepted('*.test.ts', ['a.test.ts', 'a.test.tsx', 'a.ts'])).toEqual(['a.test.ts', 'a.test.tsx'])
+    expect(accepted('a?c', ['abc', 'abcd', 'ac'])).toEqual(['abc', 'abcd'])
     expect(accepted('a.c', ['abc', 'a.c'])).toEqual(['a.c'])
+    expect(accepted('file*br', ['file-browser', 'file-system', 'my_file.browser'])).toEqual(['file-browser', 'my_file.browser'])
   })
 
   it('whole word', () => {

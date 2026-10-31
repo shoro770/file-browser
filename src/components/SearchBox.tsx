@@ -12,7 +12,7 @@ const TOGGLES: ReadonlyArray<readonly [keyof SearchOptions, string, string]> = [
 
 /**
  * Search box for the top of the tree pane: a text field with Match case, Whole word and Regex
- * toggle buttons (`aria-pressed`) and a clear button. Escape clears. Shows "Invalid pattern"
+ * toggle buttons (`aria-pressed`) and a clear button. Escape clears; ArrowDown or Enter moves focus to the results. Shows "Invalid pattern"
  * inline for a bad regex.
  */
 export default function SearchBox({
@@ -23,10 +23,16 @@ export default function SearchBox({
   onQueryChange,
   onOptionsChange,
   onClear,
+  onFocusResults,
 }: SearchBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'ArrowDown' || event.key === 'Enter') {
+      event.preventDefault()
+      onFocusResults()
+      return
+    }
     if (event.key !== 'Escape' || query === '') return
     event.preventDefault()
     onClear()

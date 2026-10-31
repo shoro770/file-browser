@@ -26,6 +26,7 @@ export default function SearchPanel({
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(NONE)
   const [lastQuery, setLastQuery] = useState(search.query)
   const latest = useRef(0)
+  const [resultsFocus, setResultsFocus] = useState(0)
 
   // A new query shows its folders expanded again.
   if (lastQuery !== search.query) {
@@ -58,9 +59,9 @@ export default function SearchPanel({
 
   if (workspace.length === 0) return <>{children}</>
 
-  let body = children
+  let results = null
   if (search.active) {
-    body =
+    results =
       view.rootIds.length > 0 && (
         <Tree
           key="search"
@@ -75,7 +76,7 @@ export default function SearchPanel({
           onSelect={(id) => pick(id, () => onSelect(id, view.items[id]))}
           onFollow={(id) => pick(id, () => onFollow(id))}
           selectedId={selectedId}
-          focusToken={0}
+          focusToken={resultsFocus}
           highlight={matcher ? (name) => matcher.ranges(name) : undefined}
         />
       )
@@ -91,8 +92,11 @@ export default function SearchPanel({
         onQueryChange={search.setQuery}
         onOptionsChange={search.setOptions}
         onClear={() => search.setQuery('')}
+        onFocusResults={() => search.active && view.rootIds.length > 0 && setResultsFocus((n) => n + 1)}
       />
-      {body}
+      {/* Kept mounted while searching, so its state survives and it never steals focus on return. */}
+      <div hidden={search.active}>{children}</div>
+      {results}
     </>
   )
 }

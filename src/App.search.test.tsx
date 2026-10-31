@@ -142,4 +142,18 @@ describe('App search', () => {
     await waitFor(() => expect(document.querySelector('[role="status"]')).toHaveTextContent('1 match'))
     await waitFor(() => expect(screen.getByRole('treeitem', { name: /^a\.txt/ })).toHaveAttribute('aria-selected', 'true'))
   })
+
+  it('keeps focus in the box when the query is emptied, and ArrowDown moves it to the results', async () => {
+    await openFolder()
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    box().focus()
+    type('a.txt')
+    await screen.findByText('1 match')
+    expect(box()).toHaveFocus()
+    fireEvent.keyDown(box(), { key: 'ArrowDown' })
+    await waitFor(() => expect(screen.getByRole('treeitem', { name: /^sub/ })).toHaveFocus())
+    box().focus()
+    type('')
+    expect(box()).toHaveFocus()
+  })
 })
