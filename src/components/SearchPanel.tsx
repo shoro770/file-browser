@@ -27,6 +27,7 @@ export default function SearchPanel({
   const [lastQuery, setLastQuery] = useState(search.query)
   const latest = useRef(0)
   const [resultsFocus, setResultsFocus] = useState(0)
+  const [boxFocus, setBoxFocus] = useState(0)
 
   // A new query shows its folders expanded again.
   if (lastQuery !== search.query) {
@@ -63,6 +64,13 @@ export default function SearchPanel({
   if (search.active) {
     results =
       view.rootIds.length > 0 && (
+        <div
+          onKeyDown={(event) => {
+            if (event.key !== 'Escape') return
+            event.preventDefault()
+            setBoxFocus((n) => n + 1)
+          }}
+        >
         <Tree
           key="search"
           items={view.items}
@@ -79,6 +87,7 @@ export default function SearchPanel({
           focusToken={resultsFocus}
           highlight={matcher ? (name) => matcher.ranges(name) : undefined}
         />
+        </div>
       )
   }
 
@@ -92,6 +101,7 @@ export default function SearchPanel({
         onQueryChange={search.setQuery}
         onOptionsChange={search.setOptions}
         onClear={() => search.setQuery('')}
+        focusToken={boxFocus}
         onFocusResults={() => search.active && view.rootIds.length > 0 && setResultsFocus((n) => n + 1)}
       />
       {/* Kept mounted while searching, so its state survives and it never steals focus on return. */}

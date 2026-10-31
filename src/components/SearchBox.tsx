@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
 import type { SearchBoxProps, SearchOptions } from '../types'
 import { Close, MagnifyingGlass } from './Glyph'
@@ -12,7 +12,7 @@ const TOGGLES: ReadonlyArray<readonly [keyof SearchOptions, string, string]> = [
 
 /**
  * Search box for the top of the tree pane: a text field with Match case, Whole word and Regex
- * toggle buttons (`aria-pressed`) and a clear button. Escape clears; ArrowDown or Enter moves focus to the results. Shows "Invalid pattern"
+ * toggle buttons (`aria-pressed`) and a clear button. Escape clears; ArrowDown or Enter moves focus to the results, and Escape there returns here. Shows "Invalid pattern"
  * inline for a bad regex.
  */
 export default function SearchBox({
@@ -24,8 +24,13 @@ export default function SearchBox({
   onOptionsChange,
   onClear,
   onFocusResults,
+  focusToken,
 }: SearchBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (focusToken !== 0) inputRef.current?.focus()
+  }, [focusToken])
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'ArrowDown' || event.key === 'Enter') {

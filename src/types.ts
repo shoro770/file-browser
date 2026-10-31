@@ -497,6 +497,8 @@ export interface SearchBoxProps {
   onClear: () => void
   /** Called on ArrowDown or Enter in the box, to move focus to the results. */
   onFocusResults: () => void
+  /** Changing this value moves focus to the box (Escape from the results). */
+  focusToken: number
 }
 
 /** Props for the `SearchPanel` component. */

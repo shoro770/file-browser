@@ -156,4 +156,15 @@ describe('App search', () => {
     type('')
     expect(box()).toHaveFocus()
   })
+
+  it('returns focus from the results to the box on Escape, keeping the query', async () => {
+    await openFolder()
+    type('a.txt')
+    await screen.findByRole('treeitem', { name: /^a\.txt/ })
+    fireEvent.keyDown(box(), { key: 'ArrowDown' })
+    await waitFor(() => expect(screen.getByRole('treeitem', { name: /^sub/ })).toHaveFocus())
+    fireEvent.keyDown(screen.getByRole('treeitem', { name: /^sub/ }), { key: 'Escape' })
+    await waitFor(() => expect(box()).toHaveFocus())
+    expect(box()).toHaveValue('a.txt')
+  })
 })
