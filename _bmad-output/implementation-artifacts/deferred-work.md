@@ -121,3 +121,10 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-5-4-run-the-release-verification.md`
   summary: Fix the stale `FileRow` name in `AGENTS.md` line 16 (the treeitem role lives in `TreeNode`), and delete the unreferenced Vite template assets `src/assets/hero.png`, `react.svg`, `vite.svg`.
   evidence: `grep FileRow` finds only `AGENTS.md`; the three assets are referenced nowhere and absent from `dist/` (low). The `AGENTS.md` edit was not made because agent-context files are out of this story's scope.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-search-files-and-folders.md`
+  summary: Add App-level tests for Refresh while a query is active and for collapsing a folder inside search results.
+  evidence: The reviewers found no test for either path; the code reads correct but is unexercised.
+- source_spec: `_bmad-output/implementation-artifacts/spec-search-files-and-folders.md`
+  summary: Run the search manual browser check in Chrome or Edge (about 1,000 entries, "Searching..." state, responsiveness).
+  evidence: Not provable headlessly; NOT RUN.

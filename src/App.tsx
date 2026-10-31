@@ -5,6 +5,7 @@ import HiddenFilesToggle from './components/HiddenFilesToggle'
 import PaneDivider from './components/PaneDivider'
 import PreviewPane from './components/PreviewPane'
 import RefreshButton from './components/RefreshButton'
+import SearchPanel from './components/SearchPanel'
 import ThemeSwitch from './components/ThemeSwitch'
 import Tree from './components/Tree'
 import UnsupportedBrowser from './components/UnsupportedBrowser'
@@ -12,7 +13,7 @@ import { usePaneWidth } from './hooks/usePaneWidth'
 import { usePreview } from './hooks/usePreview'
 import { useTree } from './hooks/useTree'
 import { filterDotfiles, isDotfileId } from './lib/tree'
-import type { AppProps } from './types'
+import type { AppProps, FileItem } from './types'
 import './App.css'
 
 /** Shown when the picker rejects for any reason other than the user cancelling. */
@@ -28,7 +29,7 @@ const missingMessage = (name: string) => `${name} was removed or can no longer b
 
 /** App shell: toolbar over a tree pane and a preview pane, or the unsupported-browser screen. */
 export default function App({ folderPickerSupported }: AppProps) {
-  const { snapshot, openWorkspace, toggle, select, refresh, setShowDotfiles } = useTree()
+  const { snapshot, openWorkspace, toggle, select, refresh, reveal, setShowDotfiles } = useTree()
   const [status, setStatus] = useState('')
   const [denied, setDenied] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -128,9 +129,9 @@ export default function App({ folderPickerSupported }: AppProps) {
   }
 
   /** Selects on activation; announces files ("Previewing {name}"), not folders. */
-  function handleSelect(id: string) {
+  function handleSelect(id: string, item: FileItem = items[id]) {
     handleFollow(id)
-    if (id !== selectedId && !items[id].isDirectory) say(`Previewing ${items[id].name}`)
+    if (id !== selectedId && !item.isDirectory) say(`Previewing ${item.name}`)
   }
 
   function handleToggle(id: string) {
@@ -168,23 +169,25 @@ export default function App({ folderPickerSupported }: AppProps) {
         )}
       </header>
       <div id="tree-pane" className="shell__tree">
-        {visibleRootIds.length > 0 && (
-          <Tree
-            key={focusToken}
-            items={items}
-            rootIds={rootIds}
-            childIds={childIds}
-            expandedIds={expandedIds}
-            loadingIds={loadingIds}
-            unavailableIds={unavailableIds}
-            showDotfiles={showDotfiles}
-            onToggle={handleToggle}
-            onSelect={handleSelect}
-            onFollow={handleFollow}
-            selectedId={selectedId}
-            focusToken={focusToken}
-          />
-        )}
+        <SearchPanel workspace={rootIds} refreshCount={refreshCount} selectedId={selectedId} reveal={reveal} onSelect={handleSelect} onFollow={handleFollow} onAnnounce={announce}>
+          {visibleRootIds.length > 0 && (
+            <Tree
+              key={focusToken}
+              items={items}
+              rootIds={rootIds}
+              childIds={childIds}
+              expandedIds={expandedIds}
+              loadingIds={loadingIds}
+              unavailableIds={unavailableIds}
+              showDotfiles={showDotfiles}
+              onToggle={handleToggle}
+              onSelect={handleSelect}
+              onFollow={handleFollow}
+              selectedId={selectedId}
+              focusToken={focusToken}
+            />
+          )}
+        </SearchPanel>
       </div>
       <PaneDivider
         width={pane.width}

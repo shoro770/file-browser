@@ -256,3 +256,44 @@ export default function Glyph({ kind, large = false }: GlyphProps) {
     </svg>
   )
 }
+
+/** Magnifying glass for the search box. Decorative. */
+export function MagnifyingGlass() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="7" cy="7" r="4.5" />
+      <path d="M10.5 10.5l3.5 3.5" />
+    </svg>
+  )
+}
+
+/** Cross for clearing the search box. Decorative. */
+export function Close() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M4 4l8 8M12 4l-8 8" />
+    </svg>
+  )
+}

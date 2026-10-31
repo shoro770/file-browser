@@ -118,6 +118,37 @@ export function select(id: string): void {
 }
 
 /**
+ * Gives the search crawl the Workspace Folder's handle. The crawl is read-only and does not touch the store.
+ *
+ * @returns The root handle, or `null` when no folder is open.
+ */
+export function getRootHandle(): WorkspaceHandle | null {
+  return handles.get('') ?? null
+}
+
+/**
+ * Makes a search result selectable: when it is not loaded yet, expands its ancestors top-down
+ * (each first read is cached, as for any expand) until it appears. A loaded result is left
+ * alone. Does not select; stops quietly at a folder that can't be read. Never throws.
+ *
+ * @param id - Id of the result.
+ * @returns `true` when the result is loaded afterwards; `false` when an ancestor can't be read
+ * or the folder changed meanwhile.
+ */
+export async function reveal(id: string): Promise<boolean> {
+  if (snapshot.items[id]) return true
+  const started = generation
+  const chain: string[] = []
+  for (let up = parentId(id); up !== ''; up = parentId(up)) chain.unshift(up)
+  for (const folder of chain) {
+    if (started !== generation || !snapshot.items[folder]) return false
+    if (!snapshot.expandedIds.has(folder)) await toggle(folder)
+    if (snapshot.unavailableIds.has(folder)) return false
+  }
+  return started === generation && snapshot.items[id] !== undefined
+}
+
+/**
  * Reads a loaded file through its parent folder's handle, without exposing the handle.
  * Used for the Selection only.
  *

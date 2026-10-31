@@ -39,6 +39,7 @@ export default function Tree({
   onFollow,
   selectedId,
   focusToken,
+  highlight,
 }: TreeProps) {
   const listRef = useRef<HTMLUListElement>(null)
   const [focusedKey, setFocusedKey] = useState<string | null>(null)
@@ -210,6 +211,7 @@ export default function Tree({
           dotfile={isDotfileId(id)}
           onToggle={onToggle}
           onSelect={onSelect}
+          ranges={highlight?.(item.name)}
         >
           {children}
         </TreeNode>

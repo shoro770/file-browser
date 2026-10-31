@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { glyphForName } from '../lib/tree'
 import type { TreeNodeProps, TreePlaceholderProps } from '../types'
 import Glyph, { Chevron, Spinner, Warning } from './Glyph'
@@ -13,6 +14,20 @@ function Indent({ level }: { level: number }) {
   return Array.from({ length: level - 1 }, (_, index) => (
     <span key={index} className="tree-row__indent" aria-hidden="true" />
   ))
+}
+
+/** The name with each matched range wrapped in a `<mark>`; the text itself is unchanged. */
+function highlighted(name: string, ranges: TreeNodeProps['ranges']) {
+  if (!ranges || ranges.length === 0) return name
+  const parts: ReactNode[] = []
+  let at = 0
+  for (const [start, end] of ranges) {
+    if (start > at) parts.push(name.slice(at, start))
+    parts.push(<mark key={start}>{name.slice(start, end)}</mark>)
+    at = end
+  }
+  if (at < name.length) parts.push(name.slice(at))
+  return parts
 }
 
 /** A disabled, non-selectable row such as "Loading..." or "Empty folder". */
@@ -58,6 +73,7 @@ export default function TreeNode({
   dotfile,
   onToggle,
   onSelect,
+  ranges,
   children,
 }: TreeNodeProps) {
   function activate() {
@@ -96,7 +112,7 @@ export default function TreeNode({
           {item.isDirectory && (loading ? <Spinner /> : <Chevron />)}
         </span>
         <Glyph kind={glyphForName(item.name, item.isDirectory)} />
-        <span className="tree-row__label">{item.name}</span>
+        <span className="tree-row__label">{highlighted(item.name, ranges)}</span>
         {unavailable && (
           <span className="tree-row__suffix" aria-hidden="true">
             <Warning />

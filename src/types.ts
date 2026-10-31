@@ -165,6 +165,8 @@ export interface TreeProps {
   selectedId: string | null
   /** Changing this value moves focus to the first row. */
   focusToken: number
+  /** Search only: returns the `[start, end)` ranges of a name to highlight. */
+  highlight?: (name: string) => ReadonlyArray<readonly [number, number]>
 }
 
 /** Props for the `TreeNode` component. */
@@ -193,6 +195,8 @@ export interface TreeNodeProps {
   onToggle: (id: string) => void
   /** Called to select the row (a folder row also toggles). */
   onSelect: (id: string) => void
+  /** Ranges of the name to highlight as search matches. */
+  ranges?: ReadonlyArray<readonly [number, number]>
   /** Rendered inside the row's `role="group"` (child rows or placeholders). */
   children?: ReactNode
 }
@@ -438,4 +442,77 @@ export type Theme = (typeof THEMES)[number]
 export interface AppProps {
   /** Whether this browser can open a folder picker (`showDirectoryPicker`). */
   folderPickerSupported: boolean
+}
+
+/** How a search query is interpreted. */
+export interface SearchOptions {
+  /** Match upper and lower case as different. */
+  matchCase: boolean
+  /** A match must be bounded by non-alphanumerics (or the name ends). */
+  wholeWord: boolean
+  /** The query is a JavaScript regular expression. */
+  regex: boolean
+}
+
+/** A compiled search query. */
+export interface SearchMatcher {
+  /** Whether a name matches. */
+  matches: (name: string) => boolean
+  /** The non-empty `[start, end)` ranges of a name that match; empty when none. */
+  ranges: (name: string) => Array<[number, number]>
+}
+
+/** Result of compiling a query: a matcher, or `{ ok: false }` for an invalid pattern. */
+export type CompiledSearch = ({ ok: true } & SearchMatcher) | { ok: false }
+
+/** The filtered tree derived from search matches. */
+export interface SearchView {
+  /** Matching entries and their ancestor folders, keyed by `id`. */
+  items: Record<string, FileItem>
+  /** Ids of the top-level rows. */
+  rootIds: string[]
+  /** Ordered child ids of every ancestor folder. */
+  childIds: Record<string, string[]>
+  /** Ids of the ancestor folders, which are shown expanded. */
+  expandedIds: Set<string>
+  /** Number of entries that match (ancestors that do not match are not counted). */
+  matchCount: number
+}
+
+/** Props for the `SearchBox` component. */
+export interface SearchBoxProps {
+  /** Current text of the box. */
+  query: string
+  /** Current match modes. */
+  options: SearchOptions
+  /** Whether the query is an invalid regular expression. */
+  invalid: boolean
+  /** Visible progress or result text ("Searching...", "3 matches"); empty for none. */
+  statusText: string
+  /** Called with the new text. */
+  onQueryChange: (query: string) => void
+  /** Called with the new match modes. */
+  onOptionsChange: (options: SearchOptions) => void
+  /** Called to clear the query (Escape or the clear button). */
+  onClear: () => void
+}
+
+/** Props for the `SearchPanel` component. */
+export interface SearchPanelProps {
+  /** Ids of the Workspace Folder's top-level rows; a new array means a new folder was opened. */
+  workspace: readonly string[]
+  /** Bumped by every Refresh; the search index is rebuilt. */
+  refreshCount: number
+  /** Id of the Selection, or `null`. */
+  selectedId: string | null
+  /** Loads the ancestors of a result that is not loaded yet, so it can be selected. */
+  reveal: (id: string) => Promise<boolean>
+  /** Called when a result is activated; `item` is the result, which may not be in the store before. */
+  onSelect: (id: string, item?: FileItem) => void
+  /** Called when keyboard navigation lands on a result. */
+  onFollow: (id: string) => void
+  /** Called with text for the status region. */
+  onAnnounce: (text: string) => void
+  /** The normal tree, shown while the query is empty. */
+  children: ReactNode
 }

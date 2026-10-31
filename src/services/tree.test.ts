@@ -19,7 +19,7 @@ vi.stubGlobal('window', {
   },
 })
 
-const { openWorkspace, getSnapshot, toggle, select, setShowDotfiles, subscribe, readItemFile, refresh } =
+const { openWorkspace, getSnapshot, toggle, reveal, select, setShowDotfiles, subscribe, readItemFile, refresh } =
   await import('./tree')
 const { readShowDotfiles } = await import('./prefs')
 
@@ -939,5 +939,42 @@ describe('refresh', () => {
     release()
     expect(await running).toEqual({ status: 'skipped' })
     expect(getSnapshot().refreshCount).toBe(0)
+  })
+})
+
+describe('reveal', () => {
+  it('expands the ancestors of an unloaded id top-down so it can be selected, and leaves loaded ids alone', async () => {
+    const leaf = fakeFolder('deep', [{ name: 'a.txt', kind: 'file' }])
+    const mid = { ...fakeFolder('sub', [{ name: 'deep', kind: 'directory' }]), getDirectoryHandle: async () => leaf }
+    const root = {
+      ...fakeFolder('proj', [{ name: 'sub', kind: 'directory' }]),
+      getDirectoryHandle: async () => mid,
+    }
+    picker.mockResolvedValue(root)
+    await openWorkspace()
+    expect(getSnapshot().items['sub/deep/a.txt']).toBeUndefined()
+    await reveal('sub/deep/a.txt')
+    expect(getSnapshot().items['sub/deep/a.txt']).toBeDefined()
+    expect(getSnapshot().expandedIds.has('sub')).toBe(true)
+    expect(getSnapshot().expandedIds.has('sub/deep')).toBe(true)
+    expect(getSnapshot().selectedId).toBeNull()
+    await reveal('sub')
+    expect(getSnapshot().expandedIds.has('sub')).toBe(true)
+  })
+
+  it('returns true once loaded, and false (without throwing) for an unreadable ancestor or a missing file', async () => {
+    const bad = {
+      ...fakeFolder('proj', [{ name: 'locked', kind: 'directory' }, { name: 'ok', kind: 'directory' }]),
+      getDirectoryHandle: async (name: string) => {
+        if (name === 'locked') throw new Error('denied')
+        return fakeFolder('ok', [{ name: 'a.txt', kind: 'file' }])
+      },
+    }
+    picker.mockResolvedValue(bad)
+    await openWorkspace()
+    expect(await reveal('locked/x.txt')).toBe(false)
+    expect(getSnapshot().selectedId).toBeNull()
+    expect(await reveal('ok/a.txt')).toBe(true)
+    expect(await reveal('ok/missing.txt')).toBe(false)
   })
 })
