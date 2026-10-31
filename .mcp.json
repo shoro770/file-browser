@@ -6,6 +6,12 @@
     },
     "codebase-memory-mcp": {
       "command": "codebase-memory-mcp"
+    },
+    "file-browser-quality": {
+      "command": "node",
+      "args": [
+        "tools/mcp-quality-server/src/index.ts"
+      ]
     }
   }
 }
