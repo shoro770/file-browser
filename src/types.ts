@@ -155,6 +155,8 @@ export interface TreeProps {
   unavailableIds: ReadonlySet<string>
   /** Whether dotfiles are shown; when `false` they are left out of every level. */
   showDotfiles: boolean
+  /** File type to show (lower-case extension, e.g. `"html"`); files of other types are left out. Unset or `null` shows all. */
+  fileType?: string | null
   /** Called to expand or collapse a folder. */
   onToggle: (id: string) => void
   /** Called to select a file or folder on activation (click, Enter, Space). */
@@ -529,4 +531,16 @@ export interface SearchPanelProps {
   onAnnounce: (text: string) => void
   /** The normal tree, shown while the query is empty. */
   children: ReactNode
+}
+
+/** Props for the `FileTypeFilter` toolbar control. */
+export interface FileTypeFilterProps {
+  /** Every loaded item; the dropdown lists the extensions of its files. */
+  items: Readonly<Record<string, FileItem>>
+  /** The chosen extension, or `null` for all files. */
+  value: string | null
+  /** Called with the new choice. */
+  onChange: (value: string | null) => void
+  /** Called with the status text after a choice. */
+  onAnnounce: (text: string) => void
 }

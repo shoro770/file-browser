@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compareFileItems, splitName } from './files'
+import { compareFileItems, extensionOf, fileExtensions, splitName } from './files'
 
 const dir = (name: string) => ({ name, isDirectory: true })
 const file = (name: string) => ({ name, isDirectory: false })
@@ -26,5 +26,24 @@ describe('splitName', () => {
   })
   it('always joins back to the name', () => {
     for (const name of ['a.b', 'x.tar.gz', '.a.b', 'noext']) expect(splitName(name).join('')).toBe(name)
+  })
+})
+
+describe('extensionOf and fileExtensions', () => {
+  it('lower-cases the extension and has none for dotfiles or bare names', () => {
+    expect(extensionOf('Report.PDF')).toBe('pdf')
+    expect(extensionOf('archive.tar.gz')).toBe('gz')
+    expect(extensionOf('.env')).toBe('')
+    expect(extensionOf('Makefile')).toBe('')
+  })
+  it('lists each extension once, sorted, ignoring folders and extensionless files', () => {
+    const items = {
+      a: { name: 'a.PDF', isDirectory: false },
+      b: { name: 'b.pdf', isDirectory: false },
+      c: { name: 'c.html', isDirectory: false },
+      d: { name: 'v1.2', isDirectory: true },
+      e: { name: 'Makefile', isDirectory: false },
+    }
+    expect(fileExtensions(items)).toEqual(['html', 'pdf'])
   })
 })
