@@ -262,7 +262,7 @@
 }
 
 .preview-header__name {
-  flex: 0 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   margin: 0;
   overflow: hidden;
@@ -272,9 +272,79 @@
   white-space: nowrap;
 }
 
+.preview-header__actions {
+  display: flex;
+  flex: none;
+  gap: var(--space-1);
+  margin-inline-start: var(--space-2);
+}
+
+/* The buttons sit at the right edge of the header, so their tips grow leftwards. */
+.preview-header__actions .has-tip::after {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--color-row-hover);
+  color: var(--color-text);
+}
+
+/* Quick CSS tip from data-tip (the browser's own title tip waits about a second). */
+.has-tip {
+  position: relative;
+}
+
+.has-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 50%;
+  z-index: 5;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  font-size: var(--font-size-caption);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%);
+}
+
+.has-tip:hover::after,
+.has-tip:focus-visible::after {
+  opacity: 1;
+  transition: opacity 80ms 120ms;
+}
+
+.has-tip.is-flashing::after {
+  opacity: 1;
+  transition: none;
+}
+
+.icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .preview-header__stamp {
   flex: none;
-  margin: 0 0 0 auto;
+  margin: 0;
   padding-inline-start: var(--space-3);
   color: var(--color-text-muted);
   font-size: var(--font-size-caption);
@@ -577,6 +647,7 @@
 }
 
 .tree-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -585,6 +656,28 @@
   font-size: var(--font-size-tree-row);
   border-inline-start: 3px solid transparent;
   transition: background-color var(--transition-duration);
+}
+
+/* Full name of a cut-off row, shown quickly under the row, wrapped to the tree width. */
+.tree-row.is-truncated::after {
+  content: attr(data-full-name);
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  z-index: 5;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-strong);
+  font-size: var(--font-size-caption);
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.tree-row.is-truncated:hover::after {
+  opacity: 1;
+  transition: opacity 80ms 150ms;
 }
 
 .tree-row:hover {
@@ -692,10 +785,20 @@
 }
 
 .tree-row__label {
+  display: flex;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* The stem shrinks with an ellipsis; the extension never does, so it stays visible. */
+.tree-row__stem {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.tree-row__ext {
+  flex: none;
 }
 
 .divider {

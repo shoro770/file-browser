@@ -359,6 +359,8 @@ export interface PreviewPaneProps {
   loading: boolean
   /** Called with the status text once a card outcome is shown. */
   onAnnounce: (text: string) => void
+  /** Name of the opened folder, for the copy-path button. */
+  rootName: string | null
 }
 
 /** Props for the `FolderCard` component. */
@@ -378,6 +380,14 @@ export interface PreviewHeaderProps {
   titleId: string
   /** Current time, for the relative stamp. */
   now: Date
+  /** Id (relative path) of the file; the path button copies it. */
+  id: string
+  /** Name of the opened folder, put before the id in the copied path. */
+  rootName: string | null
+  /** The file; the content button reads all of it, not just the preview's first 1 MB. */
+  file: File
+  /** Called with the status text after a copy. */
+  onAnnounce: (text: string) => void
 }
 
 /** Props for the `MetadataCard` component. */

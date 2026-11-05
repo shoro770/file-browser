@@ -20,7 +20,7 @@ async function docxState(name: string, body: string | null): Promise<PreviewStat
 /** Renders the pane and lets the lazy chunk and conversion settle. */
 async function show(state: PreviewState, onAnnounce = vi.fn()) {
   let view!: ReturnType<typeof render>
-  const element = (next: PreviewState) => <PreviewPane state={next} now={NOW} loading={false} onAnnounce={onAnnounce} />
+  const element = (next: PreviewState) => <PreviewPane state={next} now={NOW} loading={false} onAnnounce={onAnnounce} rootName="root" />
   await act(async () => {
     view = render(element(state))
   })

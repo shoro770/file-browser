@@ -297,3 +297,53 @@ export function Close() {
     </svg>
   )
 }
+
+/** Shared frame for the small copy-button icons. Decorative. */
+function CopyFrame({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {children}
+    </svg>
+  )
+}
+
+/** Two stacked sheets: copy the file's content. Decorative. */
+export function CopyContentIcon() {
+  return (
+    <CopyFrame>
+      <rect x="5.25" y="5.25" width="8" height="8.5" rx="1" />
+      <path d="M10.75 5.25v-2a1 1 0 0 0-1-1h-6.5a1 1 0 0 0-1 1v7.5a1 1 0 0 0 1 1h2" />
+    </CopyFrame>
+  )
+}
+
+/** A text tag: copy the file's name. Decorative. */
+export function CopyNameIcon() {
+  return (
+    <CopyFrame>
+      <path d="M2.25 3.5h11.5v9H2.25zM5 7h6M5 9.5h3.5" />
+    </CopyFrame>
+  )
+}
+
+/** A slash between two dots: copy the file's path. Decorative. */
+export function CopyPathIcon() {
+  return (
+    <CopyFrame>
+      <circle cx="3.5" cy="12.5" r="1" />
+      <circle cx="12.5" cy="3.5" r="1" />
+      <path d="M10 4.5L6 11.5" />
+    </CopyFrame>
+  )
+}

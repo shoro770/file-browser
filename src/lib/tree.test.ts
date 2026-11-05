@@ -3,6 +3,7 @@ import type { FileItem } from '../types'
 import {
   filterDotfiles,
   findTypeAhead,
+  fullPath,
   glyphForName,
   isDotfileId,
   pageStep,
@@ -219,5 +220,15 @@ describe('pageStep', () => {
   it('is at least one', () => {
     expect(pageStep(10, 28)).toBe(1)
     expect(pageStep(0, 28)).toBe(1)
+  })
+})
+
+describe('fullPath', () => {
+  it('prefixes the opened folder name', () => {
+    expect(fullPath('myfolder', 'sub/file.txt')).toBe('myfolder/sub/file.txt')
+  })
+  it('is the id alone without a folder name', () => {
+    expect(fullPath(null, 'a.txt')).toBe('a.txt')
+    expect(fullPath('', 'a.txt')).toBe('a.txt')
   })
 })

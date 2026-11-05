@@ -38,6 +38,18 @@ export function toPath(id: string): string {
 }
 
 /**
+ * Builds the path to copy for an item: the opened folder's name followed by the relative id.
+ * The browser never reveals the real absolute path, so this is the most the app can know.
+ *
+ * @param rootName - Name of the opened folder, or `null` if none is known.
+ * @param id - A normalized relative path.
+ * @returns `"<rootName>/<id>"`, or just `id` when `rootName` is `null` or empty.
+ */
+export function fullPath(rootName: string | null, id: string): string {
+  return rootName ? `${rootName}/${id}` : id
+}
+
+/**
  * Chooses the kind glyph for an entry from its name, per the EXPERIENCE.md map.
  *
  * @param name - Base name of the entry, e.g. `"report.PDF"`.

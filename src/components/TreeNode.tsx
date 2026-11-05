@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
+import { splitName } from '../lib/files'
 import { glyphForName } from '../lib/tree'
 import type { TreeNodeProps, TreePlaceholderProps } from '../types'
 import Glyph, { Chevron, Spinner, Warning } from './Glyph'
@@ -16,18 +17,34 @@ function Indent({ level }: { level: number }) {
   ))
 }
 
-/** The name with each matched range wrapped in a `<mark>`; the text itself is unchanged. */
-function highlighted(name: string, ranges: TreeNodeProps['ranges']) {
-  if (!ranges || ranges.length === 0) return name
+/** `text` (starting at `offset` in the full name) with each overlapping matched range wrapped in a `<mark>`. */
+function marked(text: string, offset: number, ranges: TreeNodeProps['ranges']): ReactNode[] {
   const parts: ReactNode[] = []
   let at = 0
-  for (const [start, end] of ranges) {
-    if (start > at) parts.push(name.slice(at, start))
-    parts.push(<mark key={start}>{name.slice(start, end)}</mark>)
+  for (const [rangeStart, rangeEnd] of ranges ?? []) {
+    const start = Math.max(rangeStart - offset, 0)
+    const end = Math.min(rangeEnd - offset, text.length)
+    if (end <= start) continue
+    if (start > at) parts.push(text.slice(at, start))
+    parts.push(<mark key={start}>{text.slice(start, end)}</mark>)
     at = end
   }
-  if (at < name.length) parts.push(name.slice(at))
+  if (at < text.length) parts.push(text.slice(at))
   return parts
+}
+
+/**
+ * The name as a shrinkable stem and a fixed extension, so a long name is cut in the middle and
+ * the extension stays visible. Each matched range is wrapped in a `<mark>`; the text itself is unchanged.
+ */
+function nameParts(name: string, isDirectory: boolean, ranges: TreeNodeProps['ranges']) {
+  const [stem, extension] = isDirectory ? [name, ''] : splitName(name)
+  return (
+    <>
+      <span className="tree-row__stem">{marked(stem, 0, ranges)}</span>
+      {extension !== '' && <span className="tree-row__ext">{marked(extension, stem.length, ranges)}</span>}
+    </>
+  )
 }
 
 /** A disabled, non-selectable row such as "Loading..." or "Empty folder". */
@@ -81,6 +98,12 @@ export default function TreeNode({
     onSelect(item.id)
   }
 
+  /** Lets CSS show the full name quickly, only when the stem is actually cut. */
+  function markIfTruncated(event: MouseEvent<HTMLDivElement>) {
+    const stem = event.currentTarget.querySelector<HTMLElement>('.tree-row__stem')
+    event.currentTarget.classList.toggle('is-truncated', stem !== null && stem.scrollWidth > stem.clientWidth)
+  }
+
   const classes = ['tree-row']
   if (selected) classes.push('is-selected')
   if (expanded) classes.push('is-expanded')
@@ -104,7 +127,8 @@ export default function TreeNode({
     >
       <div
         className={classes.join(' ')}
-        title={item.name}
+        data-full-name={item.name}
+        onMouseEnter={markIfTruncated}
         onClick={activate}
       >
         <Indent level={level} />
@@ -112,7 +136,7 @@ export default function TreeNode({
           {item.isDirectory && (loading ? <Spinner /> : <Chevron />)}
         </span>
         <Glyph kind={glyphForName(item.name, item.isDirectory)} />
-        <span className="tree-row__label">{highlighted(item.name, ranges)}</span>
+        <span className="tree-row__label">{nameParts(item.name, item.isDirectory, ranges)}</span>
         {unavailable && (
           <span className="tree-row__suffix" aria-hidden="true">
             <Warning />

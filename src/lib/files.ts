@@ -47,3 +47,21 @@ export function compareFileItems(
   if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1
   return a.name.localeCompare(b.name, 'en', { sensitivity: 'base', numeric: true })
 }
+
+/** Longest extension (with its dot) that is kept apart from the stem; longer tails stay in the stem. */
+const MAX_EXTENSION_LENGTH = 12
+
+/**
+ * Splits a file name into the part that may be shortened and its extension, so a long name
+ * can be cut in the middle and still show the extension.
+ *
+ * @param name - Base name, e.g. `"report.final.pdf"`.
+ * @returns `[stem, extension]` where the extension includes its dot (`"report.final"`, `".pdf"`).
+ * The extension is `''` for names without one, dotfiles like `".env"`, names ending in a dot and
+ * extensions longer than 12 characters; the two parts always join back to `name`.
+ */
+export function splitName(name: string): [stem: string, extension: string] {
+  const dot = name.lastIndexOf('.')
+  if (dot <= 0 || dot === name.length - 1 || name.length - dot > MAX_EXTENSION_LENGTH) return [name, '']
+  return [name.slice(0, dot), name.slice(dot)]
+}

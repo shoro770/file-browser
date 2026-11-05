@@ -199,7 +199,7 @@ export default function App({ folderPickerSupported }: AppProps) {
       />
       <main className="shell__preview">
         {selectedItem !== null ? (
-          <PreviewPane state={preview.state} now={preview.now} loading={preview.loading} onAnnounce={setStatus} />
+          <PreviewPane state={preview.state} now={preview.now} loading={preview.loading} onAnnounce={setStatus} rootName={rootName} />
         ) : (
           <EmptyPreview
             rootName={rootName}

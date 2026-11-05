@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { NOW, makeSource } from '../testHelpers'
 import MetadataCard from './MetadataCard'
 import PreviewHeader from './PreviewHeader'
@@ -43,7 +43,10 @@ describe('MetadataCard', () => {
 
 describe('PreviewHeader', () => {
   it('names the region with an h2 and stamps the modified time in a <time>', () => {
-    render(<PreviewHeader meta={makeSource('a.md', 'markdown').meta} titleId="t" now={NOW} />)
+    const source = makeSource('a.md', 'markdown')
+    render(
+      <PreviewHeader meta={source.meta} titleId="t" now={NOW} id="a.md" rootName="root" file={source.file} onAnnounce={vi.fn()} />,
+    )
     expect(screen.getByRole('heading', { level: 2, name: 'a.md' })).toHaveAttribute('id', 't')
     const stamp = screen.getByText('Yesterday at 11:04 AM')
     expect(stamp.tagName).toBe('TIME')
