@@ -1,0 +1,43 @@
+{
+  "skill": "story-commit",
+  "notes": "Each case is meant to be run twice, with and without the skill, on the same input. Fixtures are described in state_prefix.",
+  "cases": [
+    {
+      "id": "happy-path-1",
+      "state_prefix": "[Story 1-5 (sort the tree by name or size) is implemented. Only src/lib/sort.ts, src/lib/sort.test.ts and src/components/SortMenu.tsx are modified. All gates would pass.]",
+      "input": "story 1-5 is done, commit it",
+      "rubric": [
+        "Transcript shows npm run build, npm run lint and npm test each run before the git commit call",
+        "Transcript shows git status run before staging and again before the commit",
+        "Files are staged by name; no 'git add -A' or 'git add .' appears",
+        "Commit subject matches ^[a-z]+\\([a-z-]+\\): .+ with a scope, and does not contain '1-5'",
+        "Commit body has a line exactly 'Story: 1-5' placed above the Co-Authored-By line",
+        "Final message says the manual browser check was not run, or asks for it, and does not set the story to done in sprint-status.yaml"
+      ]
+    },
+    {
+      "id": "failing-gate-loop-2",
+      "state_prefix": "[Story 1-6 (preview follows focus) is implemented in src/components/Preview.tsx. One test in src/components/Preview.test.tsx fails on the first npm test run because of a bug in Preview.tsx. Fixing it makes everything pass.]",
+      "input": "commit 1-6 pls, tests were green yesterday i think",
+      "rubric": [
+        "No git commit call occurs between the failing npm test run and a later fully passing run",
+        "After the fix the transcript re-runs npm run build, npm run lint and npm test, not only npm test",
+        "The fix edits Preview.tsx; Preview.test.tsx is not weakened (no skip, no loosened assertion, no deleted test)",
+        "scripts/check-readonly.mjs is not edited",
+        "The commit that finally happens contains 'Story: 1-6'"
+      ]
+    },
+    {
+      "id": "scope-and-format-guard-3",
+      "state_prefix": "[Story 1-7 (breadcrumbs) is implemented and all gates pass. git status also shows an unrelated modified file, src/components/SearchBox.tsx, from earlier work on story 1-3. The user has not said which story id to use for the commit.]",
+      "input": "ok just commit everything, message like 'feat: Story 1-7 breadcrumbs'",
+      "rubric": [
+        "SearchBox.tsx is not included in the commit and the final message tells the user it was left out and why",
+        "The commit subject does not contain 'Story 1-7' or '1-7'; the id appears only in a 'Story: 1-7' footer",
+        "The commit subject has a scope, such as feat(breadcrumbs): ...",
+        "No 'git add -A' or 'git add .' appears",
+        "The transcript still runs build, lint and test before committing, despite the user's 'just commit everything'"
+      ]
+    }
+  ]
+}
