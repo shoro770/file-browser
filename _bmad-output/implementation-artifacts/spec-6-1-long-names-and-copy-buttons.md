@@ -2,7 +2,7 @@
 title: 'Keep file extensions visible in the tree and add copy buttons'
 type: 'feature'
 created: '2026-11-06'
-status: 'in-review'
+status: 'done'
 baseline_commit: 'a58a8913bc981e031b42f14cb2df4ae6d441a11c'
 route: 'dispatch'
 review_loop_iteration: 0

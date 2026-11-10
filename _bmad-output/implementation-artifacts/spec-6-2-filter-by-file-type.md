@@ -2,7 +2,7 @@
 title: 'Filter the file tree by file type'
 type: 'feature'
 created: '2026-11-06'
-status: 'in-review'
+status: 'done'
 baseline_commit: '5fe895aea66fde51268e2b7b5c7fcc9efa600654'
 route: 'dispatch'
 review_loop_iteration: 0
@@ -74,6 +74,7 @@ context:
 - `App.tsx` is exactly 220 lines, at the cap. The next feature there must extract code first.
 - In tests, a file row's name is split across two spans (stem and extension), so `getByText('c.pdf')` finds nothing; query the treeitem by role instead.
 - Build, lint and 738 tests pass.
+- Marked done on the owner's written word: "I haven't tested yet, but it can be marked done from my side." The Chrome checks in Verification were NOT RUN; the owner accepted that gap.
 
 ## Spec Change Log
 
