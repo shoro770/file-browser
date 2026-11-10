@@ -47,3 +47,47 @@ export function compareFileItems(
   if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1
   return a.name.localeCompare(b.name, 'en', { sensitivity: 'base', numeric: true })
 }
+
+/** Longest extension (with its dot) that is kept apart from the stem; longer tails stay in the stem. */
+const MAX_EXTENSION_LENGTH = 12
+
+/**
+ * Splits a file name into the part that may be shortened and its extension, so a long name
+ * can be cut in the middle and still show the extension.
+ *
+ * @param name - Base name, e.g. `"report.final.pdf"`.
+ * @returns `[stem, extension]` where the extension includes its dot (`"report.final"`, `".pdf"`).
+ * The extension is `''` for names without one, dotfiles like `".env"`, names ending in a dot and
+ * extensions longer than 12 characters; the two parts always join back to `name`.
+ */
+export function splitName(name: string): [stem: string, extension: string] {
+  const dot = name.lastIndexOf('.')
+  if (dot <= 0 || dot === name.length - 1 || name.length - dot > MAX_EXTENSION_LENGTH) return [name, '']
+  return [name.slice(0, dot), name.slice(dot)]
+}
+
+/**
+ * Gets the lower-case extension of a file name, for the file type filter.
+ *
+ * @param name - Base name, e.g. `"Report.PDF"`.
+ * @returns `"pdf"`; `''` for names without an extension and dotfiles like `".env"` (see `splitName`).
+ */
+export function extensionOf(name: string): string {
+  return splitName(name)[1].slice(1).toLowerCase()
+}
+
+/**
+ * Lists the distinct file extensions among loaded items, for the file type dropdown.
+ *
+ * @param items - Every loaded item, keyed by id; folders are ignored.
+ * @returns Lower-case extensions without the dot, sorted A to Z; files with no extension add nothing.
+ */
+export function fileExtensions(items: Readonly<Record<string, Pick<FileItem, 'name' | 'isDirectory'>>>): string[] {
+  const found = new Set<string>()
+  for (const item of Object.values(items)) {
+    if (item.isDirectory) continue
+    const extension = extensionOf(item.name)
+    if (extension !== '') found.add(extension)
+  }
+  return [...found].sort((a, b) => a.localeCompare(b, 'en'))
+}

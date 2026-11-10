@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import EmptyPreview from './components/EmptyPreview'
+import FileTypeFilter from './components/FileTypeFilter'
 import Glyph from './components/Glyph'
 import HiddenFilesToggle from './components/HiddenFilesToggle'
 import PaneDivider from './components/PaneDivider'
@@ -12,7 +13,7 @@ import UnsupportedBrowser from './components/UnsupportedBrowser'
 import { usePaneWidth } from './hooks/usePaneWidth'
 import { usePreview } from './hooks/usePreview'
 import { useTree } from './hooks/useTree'
-import { filterDotfiles, isDotfileId } from './lib/tree'
+import { filterSiblings, isDotfileId } from './lib/tree'
 import type { AppProps, FileItem } from './types'
 import './App.css'
 
@@ -34,13 +35,14 @@ export default function App({ folderPickerSupported }: AppProps) {
   const [denied, setDenied] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [focusToken, setFocusToken] = useState(0)
+  const [fileType, setFileType] = useState<string | null>(null)
   const openButtonRef = useRef<HTMLButtonElement>(null)
   const announceFrame = useRef(0)
   const pane = usePaneWidth()
 
   const { rootName, rootIds, items, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, selectedId, refreshing, refreshCount } =
     snapshot
-  const visibleRootIds = filterDotfiles(rootIds, items, showDotfiles)
+  const visibleRootIds = filterSiblings(rootIds, items, showDotfiles, fileType)
   const selectedItem = selectedId === null ? null : (items[selectedId] ?? null)
   const preview = usePreview(selectedItem, refreshCount)
   // The selection whose preview a completed Refresh is waiting on before it announces "Refreshed.".
@@ -110,6 +112,7 @@ export default function App({ folderPickerSupported }: AppProps) {
     say('')
     const outcome = await openWorkspace()
     if (outcome.status === 'opened') {
+      setFileType(null)
       setNotice(null)
       say(`Opened ${outcome.name}`)
       if (outcome.count > 0) setFocusToken((token) => token + 1)
@@ -160,6 +163,7 @@ export default function App({ folderPickerSupported }: AppProps) {
           {rootName}
         </span>
         <HiddenFilesToggle shown={showDotfiles} onToggle={handleToggleDotfiles} />
+        <FileTypeFilter items={items} value={fileType} onChange={setFileType} onAnnounce={announce} />
         <RefreshButton enabled={rootName !== null} refreshing={refreshing} onRefresh={handleRefresh} />
         <ThemeSwitch />
         {denied && (
@@ -180,6 +184,7 @@ export default function App({ folderPickerSupported }: AppProps) {
               loadingIds={loadingIds}
               unavailableIds={unavailableIds}
               showDotfiles={showDotfiles}
+              fileType={fileType}
               onToggle={handleToggle}
               onSelect={handleSelect}
               onFollow={handleFollow}
@@ -199,7 +204,7 @@ export default function App({ folderPickerSupported }: AppProps) {
       />
       <main className="shell__preview">
         {selectedItem !== null ? (
-          <PreviewPane state={preview.state} now={preview.now} loading={preview.loading} onAnnounce={setStatus} />
+          <PreviewPane state={preview.state} now={preview.now} loading={preview.loading} onAnnounce={setStatus} rootName={rootName} />
         ) : (
           <EmptyPreview
             rootName={rootName}

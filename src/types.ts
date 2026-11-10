@@ -155,6 +155,8 @@ export interface TreeProps {
   unavailableIds: ReadonlySet<string>
   /** Whether dotfiles are shown; when `false` they are left out of every level. */
   showDotfiles: boolean
+  /** File type to show (lower-case extension, e.g. `"html"`); files of other types are left out. Unset or `null` shows all. */
+  fileType?: string | null
   /** Called to expand or collapse a folder. */
   onToggle: (id: string) => void
   /** Called to select a file or folder on activation (click, Enter, Space). */
@@ -359,6 +361,8 @@ export interface PreviewPaneProps {
   loading: boolean
   /** Called with the status text once a card outcome is shown. */
   onAnnounce: (text: string) => void
+  /** Name of the opened folder, for the copy-path button. */
+  rootName: string | null
 }
 
 /** Props for the `FolderCard` component. */
@@ -378,6 +382,14 @@ export interface PreviewHeaderProps {
   titleId: string
   /** Current time, for the relative stamp. */
   now: Date
+  /** Id (relative path) of the file; the path button copies it. */
+  id: string
+  /** Name of the opened folder, put before the id in the copied path. */
+  rootName: string | null
+  /** The file; the content button reads all of it, not just the preview's first 1 MB. */
+  file: File
+  /** Called with the status text after a copy. */
+  onAnnounce: (text: string) => void
 }
 
 /** Props for the `MetadataCard` component. */
@@ -519,4 +531,16 @@ export interface SearchPanelProps {
   onAnnounce: (text: string) => void
   /** The normal tree, shown while the query is empty. */
   children: ReactNode
+}
+
+/** Props for the `FileTypeFilter` toolbar control. */
+export interface FileTypeFilterProps {
+  /** Every loaded item; the dropdown lists the extensions of its files. */
+  items: Readonly<Record<string, FileItem>>
+  /** The chosen extension, or `null` for all files. */
+  value: string | null
+  /** Called with the new choice. */
+  onChange: (value: string | null) => void
+  /** Called with the status text after a choice. */
+  onAnnounce: (text: string) => void
 }

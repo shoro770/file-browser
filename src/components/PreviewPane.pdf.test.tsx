@@ -13,7 +13,7 @@ const text = (value: string): TextContent => ({ text: value, truncated: false, t
 /** Renders the pane and lets the lazy chunk settle. */
 async function show(state: PreviewState, onAnnounce = vi.fn(), strict = false) {
   const element = (next: PreviewState) => {
-    const props: PreviewPaneProps = { state: next, now: NOW, loading: false, onAnnounce }
+    const props: PreviewPaneProps = { state: next, now: NOW, loading: false, onAnnounce, rootName: 'root' }
     return strict ? (
       <StrictMode>
         <PreviewPane {...props} />

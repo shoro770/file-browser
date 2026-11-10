@@ -62,7 +62,8 @@ describe('App search', () => {
     expect(screen.getAllByRole('group').length).toBe(2)
     expect(screen.queryByRole('treeitem', { name: /README/ })).not.toBeInTheDocument()
     expect(tabStops()).toHaveLength(1)
-    expect(result.querySelector('mark')).toHaveTextContent('a.txt')
+    // The name is a stem and an extension, so a whole-name match is two adjacent marks.
+    expect([...result.querySelectorAll('mark')].map((mark) => mark.textContent).join('')).toBe('a.txt')
   })
 
   it('searches dotfiles, and supports wildcard, whole word and regex modes', async () => {

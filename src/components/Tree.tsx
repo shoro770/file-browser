@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import {
-  filterDotfiles,
+  filterSiblings,
   findTypeAhead,
   isDotfileId,
   PLACEHOLDER_PREFIX,
@@ -34,6 +34,7 @@ export default function Tree({
   loadingIds,
   unavailableIds,
   showDotfiles,
+  fileType = null,
   onToggle,
   onSelect,
   onFollow,
@@ -52,7 +53,7 @@ export default function Tree({
     listRef.current?.querySelector<HTMLElement>('[role="treeitem"]')?.focus()
   }, [focusToken])
 
-  const rows = visibleRows(items, rootIds, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles)
+  const rows = visibleRows(items, rootIds, childIds, expandedIds, loadingIds, unavailableIds, showDotfiles, fileType)
   const visibleKeys = new Set(rows.map((row) => row.key))
 
   // Remember the row order for as long as the focused row is visible, so that when it is
@@ -169,7 +170,7 @@ export default function Tree({
   }
 
   const renderRows = (allIds: readonly string[], level: number): ReactNode => {
-    const ids = filterDotfiles(allIds, items, showDotfiles)
+    const ids = filterSiblings(allIds, items, showDotfiles, fileType)
     return ids.map((id, index) => {
       const item = items[id]
       const expanded = item.isDirectory && expandedIds.has(id)
@@ -190,8 +191,8 @@ export default function Tree({
         )
         if (loading) children = placeholder('Loading...')
         else if (unavailable) children = placeholder("This folder can't be read.")
-        else if (childList && filterDotfiles(childList, items, showDotfiles).length === 0) {
-          children = placeholder(childList.length === 0 ? 'Empty folder' : 'No visible files')
+        else if (childList && filterSiblings(childList, items, showDotfiles, fileType).length === 0) {
+          children = placeholder(childList.length === 0 ? 'Empty folder' : fileType === null ? 'No visible files' : 'No matching files')
         }
         else if (childList) children = renderRows(childList, level + 1)
       }

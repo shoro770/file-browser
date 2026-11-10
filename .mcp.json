@@ -12,6 +12,13 @@
       "args": [
         "tools/mcp-quality-server/src/index.ts"
       ]
+    },
+    "code-review-graph": {
+      "command": "/Users/shalom/.local/bin/code-review-graph",
+      "args": [
+        "serve"
+      ],
+      "type": "stdio"
     }
   }
 }

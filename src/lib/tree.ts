@@ -3,6 +3,7 @@
  */
 
 import type { FileItem, GlyphKind, VisibleRow } from '../types'
+import { extensionOf } from './files'
 import { glyphForFile } from './preview'
 
 /**
@@ -35,6 +36,18 @@ export function parentId(id: string): string {
  */
 export function toPath(id: string): string {
   return `/${id}`
+}
+
+/**
+ * Builds the path to copy for an item: the opened folder's name followed by the relative id.
+ * The browser never reveals the real absolute path, so this is the most the app can know.
+ *
+ * @param rootName - Name of the opened folder, or `null` if none is known.
+ * @param id - A normalized relative path.
+ * @returns `"<rootName>/<id>"`, or just `id` when `rootName` is `null` or empty.
+ */
+export function fullPath(rootName: string | null, id: string): string {
+  return rootName ? `${rootName}/${id}` : id
 }
 
 /**
@@ -89,6 +102,27 @@ export function filterDotfiles(
 }
 
 /**
+ * Leaves out dotfiles when hidden, and, while a file type is chosen, every file of another type.
+ * Folders are never removed by the type filter, because what is inside an unopened folder is unknown.
+ *
+ * @param ids - Sibling ids, in display order.
+ * @param items - Every loaded item, keyed by id.
+ * @param showDotfiles - Whether dotfiles are shown.
+ * @param extension - Lower-case extension to keep (e.g. `"html"`), or `null` for all files.
+ * @returns The ids to display, in the same order.
+ */
+export function filterSiblings(
+  ids: readonly string[],
+  items: Readonly<Record<string, FileItem>>,
+  showDotfiles: boolean,
+  extension: string | null = null,
+): readonly string[] {
+  const visible = filterDotfiles(ids, items, showDotfiles)
+  if (extension === null) return visible
+  return visible.filter((id) => items[id].isDirectory || extensionOf(items[id].name) === extension)
+}
+
+/**
  * Flattens the tree into the rows currently visible, in display order, including the
  * "Loading...", "Empty folder" (also "No visible files") and unavailable-folder placeholder rows.
  *
@@ -99,6 +133,7 @@ export function filterDotfiles(
  * @param loadingIds - Ids of folders showing a loading state.
  * @param unavailableIds - Ids of folders that could not be read.
  * @param showDotfiles - Whether dotfiles are shown; when `false` they and their subtrees are left out.
+ * @param extension - File type to keep (see `filterSiblings`), or `null` for all files.
  * @returns The visible rows; placeholder keys are `placeholderKey(folderId)`.
  */
 export function visibleRows(
@@ -109,10 +144,11 @@ export function visibleRows(
   loadingIds: ReadonlySet<string>,
   unavailableIds: ReadonlySet<string>,
   showDotfiles: boolean,
+  extension: string | null = null,
 ): VisibleRow[] {
   const rows: VisibleRow[] = []
   const walk = (ids: readonly string[], parentKey: string | null) => {
-    for (const id of filterDotfiles(ids, items, showDotfiles)) {
+    for (const id of filterSiblings(ids, items, showDotfiles, extension)) {
       const item = items[id]
       const expanded = item.isDirectory && expandedIds.has(id)
       rows.push({ key: id, itemId: id, parentKey, isDirectory: item.isDirectory, expanded, name: item.name })
@@ -123,7 +159,7 @@ export function visibleRows(
       }
       if (loadingIds.has(id)) rows.push(placeholder)
       else if (unavailableIds.has(id)) rows.push(placeholder)
-      else if (childList && filterDotfiles(childList, items, showDotfiles).length === 0) rows.push(placeholder)
+      else if (childList && filterSiblings(childList, items, showDotfiles, extension).length === 0) rows.push(placeholder)
       else if (childList) walk(childList, id)
     }
   }

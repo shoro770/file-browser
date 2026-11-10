@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { FileItem } from '../types'
 import {
   filterDotfiles,
+  filterSiblings,
   findTypeAhead,
+  fullPath,
   glyphForName,
   isDotfileId,
   pageStep,
@@ -219,5 +221,43 @@ describe('pageStep', () => {
   it('is at least one', () => {
     expect(pageStep(10, 28)).toBe(1)
     expect(pageStep(0, 28)).toBe(1)
+  })
+})
+
+describe('fullPath', () => {
+  it('prefixes the opened folder name', () => {
+    expect(fullPath('myfolder', 'sub/file.txt')).toBe('myfolder/sub/file.txt')
+  })
+  it('is the id alone without a folder name', () => {
+    expect(fullPath(null, 'a.txt')).toBe('a.txt')
+    expect(fullPath('', 'a.txt')).toBe('a.txt')
+  })
+})
+
+describe('filterSiblings and the file type filter', () => {
+  const items = {
+    docs: dir('docs'),
+    'a.html': file('a.html'),
+    'B.HTML': file('B.HTML'),
+    'c.pdf': file('c.pdf'),
+    Makefile: file('Makefile'),
+    '.env': file('.env'),
+  }
+  const ids = ['docs', 'a.html', 'B.HTML', 'c.pdf', 'Makefile', '.env']
+
+  it('keeps everything for no type, and still hides dotfiles when asked', () => {
+    expect(filterSiblings(ids, items, true, null)).toEqual(ids)
+    expect(filterSiblings(ids, items, false, null)).not.toContain('.env')
+  })
+  it('keeps matching files (any case) and all folders, in order', () => {
+    expect(filterSiblings(ids, items, true, 'html')).toEqual(['docs', 'a.html', 'B.HTML'])
+  })
+  it('drops files without an extension and dotfiles under any type', () => {
+    expect(filterSiblings(ids, items, true, 'pdf')).toEqual(['docs', 'c.pdf'])
+  })
+  it('flattens only matching rows and gives a folder with no match a placeholder', () => {
+    const more = { ...items, 'docs/x.pdf': file('docs/x.pdf') }
+    const rows = visibleRows(more, ids, { docs: ['docs/x.pdf'] }, new Set(['docs']), new Set(), new Set(), true, 'html')
+    expect(rows.map((row) => row.key)).toEqual(['docs', placeholderKey('docs'), 'a.html', 'B.HTML'])
   })
 })

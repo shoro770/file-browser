@@ -7,6 +7,9 @@ import { formatSize } from './format'
 /** Most bytes of a text file that are read and shown (1 MB). */
 export const MAX_TEXT_BYTES = 1_048_576
 
+/** Largest text file the Copy content button reads in full (10 MB). */
+export const MAX_COPY_BYTES = 10_485_760
+
 /**
  * Drops an incomplete UTF-8 sequence at the end of a byte run, so cutting a file at a byte
  * limit never leaves a replacement character at the cut. Looks back at most 3 bytes.

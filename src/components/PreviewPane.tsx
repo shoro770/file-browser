@@ -37,7 +37,7 @@ function sourceKey(id: string, { imageUrl, pdfUrl }: PreviewSource): string {
  * The previous file stays on screen until the new one is ready. A renderer that throws or
  * cannot decode its file is replaced by the Metadata Card with the render-failure text.
  */
-export default function PreviewPane({ state, now, loading, onAnnounce }: PreviewPaneProps) {
+export default function PreviewPane({ state, now, loading, onAnnounce, rootName }: PreviewPaneProps) {
   const [failedSource, setFailedSource] = useState<PreviewSource | null>(null)
   const key = state.status === 'ready' ? sourceKey(state.id, state.source) : null
   // Every session builds a new source object, so a reselected file gets a fresh attempt.
@@ -71,7 +71,15 @@ export default function PreviewPane({ state, now, loading, onAnnounce }: Preview
     >
       {state.status === 'ready' && (
         <>
-          <PreviewHeader meta={state.source.meta} titleId={TITLE_ID} now={now} />
+          <PreviewHeader
+            meta={state.source.meta}
+            titleId={TITLE_ID}
+            now={now}
+            id={state.id}
+            rootName={rootName}
+            file={state.source.file}
+            onAnnounce={onAnnounce}
+          />
           {renderer === 'text' ? (
             <PreviewBoundary key={key} onFail={fail}>
               <TextPreview source={state.source} />

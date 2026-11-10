@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 10-25-2026 01:41
-last_updated: 10-27-2026 12:00
+last_updated: 11-10-2026 09:00
 project: file-browser
 project_key: NOKEY
 tracking_system: file-system
@@ -73,6 +73,10 @@ development_status:
   5-3-verify-assistive-technology-and-display-modes: done
   5-4-run-the-release-verification: review
   epic-5-retrospective: done
+
+  epic-6: in-progress
+  6-1-long-names-and-copy-buttons: done
+  6-2-filter-by-file-type: done
 action_items:
   - id: "epic-1-retro-item-1-add-a-dom-test-environment-and-write-the"
     epic: 1

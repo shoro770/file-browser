@@ -21,7 +21,7 @@ const ready = (source: ReturnType<typeof makeSource>): PreviewState => ({ status
 
 /** Renders the pane and lets lazy chunks and renders settle. */
 async function show(state: PreviewState, onAnnounce = vi.fn(), loading = false) {
-  const props: PreviewPaneProps = { state, now: NOW, loading, onAnnounce }
+  const props: PreviewPaneProps = { state, now: NOW, loading, onAnnounce, rootName: 'root' }
   let view!: ReturnType<typeof render>
   await act(async () => {
     view = render(<PreviewPane {...props} />)
