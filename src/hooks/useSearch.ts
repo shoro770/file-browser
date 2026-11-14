@@ -10,6 +10,16 @@ const FLUSH_MS = 100
 const DEBOUNCE_MS = 120
 
 const DEFAULT_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, regex: false }
+const NO_ENTRIES: readonly FileItem[] = []
+
+/** Entries gathered by one crawl, tagged with the folder and Refresh it ran for. */
+interface CrawlResult {
+  readonly workspace: readonly string[]
+  readonly refreshCount: number
+  readonly entries: readonly FileItem[]
+  readonly done: boolean
+}
+
 const NO_VIEW: SearchView = { items: {}, rootIds: [], childIds: {}, expandedIds: new Set(), matchCount: 0 }
 
 /**
@@ -27,11 +37,16 @@ export function useSearch(workspace: readonly string[], refreshCount: number) {
   const [query, setQueryState] = useState('')
   const [applied, setApplied] = useState('')
   const [options, setOptions] = useState<SearchOptions>(DEFAULT_OPTIONS)
-  const [entries, setEntries] = useState<readonly FileItem[]>([])
-  const [crawling, setCrawling] = useState(false)
+  const [result, setResult] = useState<CrawlResult | null>(null)
   const [lastGood, setLastGood] = useState<SearchMatcher | null>(null)
 
   const active = applied !== ''
+
+  // A result from an earlier folder or Refresh is ignored, so a restarted crawl begins empty
+  // without resetting state inside the effect.
+  const current = active && result?.workspace === workspace && result.refreshCount === refreshCount ? result : null
+  const entries = current?.entries ?? NO_ENTRIES
+  const crawling = active && !current?.done
 
   useEffect(() => {
     if (query === '') return
@@ -42,8 +57,12 @@ export function useSearch(workspace: readonly string[], refreshCount: number) {
   useEffect(() => {
     if (!active) return
     const controller = new AbortController()
-    setEntries([])
-    setCrawling(true)
+    /** Applies an update to this crawl's result, starting a fresh one if the stored one is older. */
+    const update = (change: (previous: CrawlResult) => CrawlResult) =>
+      setResult((previous) => {
+        const own = previous?.workspace === workspace && previous.refreshCount === refreshCount
+        return change(own ? previous : { workspace, refreshCount, entries: NO_ENTRIES, done: false })
+      })
     let pending: FileItem[] = []
     let timer: ReturnType<typeof setTimeout> | undefined
     /** Adds the entries gathered so far in one update, not one per folder. */
@@ -52,7 +71,7 @@ export function useSearch(workspace: readonly string[], refreshCount: number) {
       if (controller.signal.aborted || pending.length === 0) return
       const batch = pending
       pending = []
-      setEntries((previous) => previous.concat(batch))
+      update((previous) => ({ ...previous, entries: previous.entries.concat(batch) }))
     }
     void (async () => {
       try {
@@ -66,7 +85,7 @@ export function useSearch(workspace: readonly string[], refreshCount: number) {
       }
       clearTimeout(timer)
       flush()
-      if (!controller.signal.aborted) setCrawling(false)
+      if (!controller.signal.aborted) update((previous) => ({ ...previous, done: true }))
     })()
     return () => {
       controller.abort()
@@ -97,8 +116,7 @@ export function useSearch(workspace: readonly string[], refreshCount: number) {
     setQueryState(next)
     if (next !== '') return
     setApplied('')
-    setEntries([])
-    setCrawling(false)
+    setResult(null)
     setLastGood(null)
   }
 
