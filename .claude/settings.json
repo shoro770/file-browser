@@ -48,5 +48,19 @@
         ]
       }
     ]
+  },
+  "_disabled_hooks": {
+    "_note": "INACTIVE. Not read by Claude Code. To enable, move the Stop block below into \"hooks\" as \"Stop\".",
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-gate.mjs",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
   }
 }
