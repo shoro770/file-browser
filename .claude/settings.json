@@ -12,19 +12,19 @@
             "timeout": 10
           }
         ]
-      },
+      }
+    ],
+    "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-writes.mjs",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit-check.mjs",
             "timeout": 10
           }
         ]
-      }
-    ],
-    "PostToolUse": [
+      },
       {
         "matcher": "Edit|Write",
         "hooks": [
