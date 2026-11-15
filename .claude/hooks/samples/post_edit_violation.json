@@ -1,0 +1,17 @@
+{
+  "session_id": "sample-session-0001",
+  "transcript_path": "/home/user/.claude/projects/file-browser/sample-session-0001.jsonl",
+  "cwd": "/home/user/file-browser",
+  "permission_mode": "default",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Edit",
+  "tool_input": {
+    "file_path": "/home/user/file-browser/.claude/hooks/samples/src/lib/violation.ts",
+    "old_string": "const a = 1",
+    "new_string": "const a = 2"
+  },
+  "tool_response": {
+    "success": true
+  },
+  "tool_use_id": "toolu_sample_post_violation"
+}
