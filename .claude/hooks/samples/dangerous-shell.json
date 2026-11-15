@@ -1,0 +1,13 @@
+{
+  "session_id": "sample-session-0001",
+  "transcript_path": "/home/user/.claude/projects/file-browser/sample-session-0001.jsonl",
+  "cwd": "/home/user/file-browser",
+  "permission_mode": "default",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "rm -rf /tmp/test",
+    "description": "Delete the test directory"
+  },
+  "tool_use_id": "toolu_sample_dangerous"
+}
