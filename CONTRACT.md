@@ -4,7 +4,9 @@ Read this on day one. Every rule names what enforces it. Rules marked **advisory
 
 Config lives in `.claude/settings.json`; hook scripts in `.claude/hooks/` (fixtures in `.claude/hooks/samples/`).
 
-**Status key**: ✅ active now · ⏸️ script exists but is parked under `_disabled_hooks` in `settings.json` (not running) · ⚠️ advisory only.
+**Status key**: ✅ active now (enforced by a hook or permission rule) · 🧪 a check that reports when run, not a blocking hook · ⚠️ advisory only.
+
+Audit: `audit-log.mjs` (PostToolUse on Edit/Write/MultiEdit/Bash, and Stop) appends one scrubbed line per event to `logs/agent-audit.jsonl` (gitignored).
 
 ## 1. May do autonomously
 
@@ -33,13 +35,13 @@ Config lives in `.claude/settings.json`; hook scripts in `.claude/hooks/` (fixtu
 | `rm -r` / `rm -rf` / `rm -R` / `--recursive` | ✅ `shell-guard.sh` (PreToolUse on Bash, exit 2) |
 | `npm`/`pnpm`/`yarn … publish` | ✅ `shell-guard.sh` |
 | `git push --force`, `-f`, `--force-with-lease`, `+refspec` | ✅ `shell-guard.sh` (also hits the `git push` ask rule) |
-| Write/edit `.env`, `.env.*` | ⏸️ `guard-writes.mjs` (PreToolUse on Edit/Write/MultiEdit; **parked, not running**). Read is blocked, write is not |
-| Write/edit `.claude/settings.json` | ⏸️ `guard-writes.mjs` (**parked**). Today anything can change the permissions |
-| Write/edit build output `dist/` | ⏸️ `guard-writes.mjs` (**parked**) |
-| Finish a turn while `npm run check` is red | ⏸️ `stop-gate.mjs` (Stop hook; **parked**). Until it is enabled, this is ⚠️ advisory only |
-| Commit with failing types or lint (`npm run build` and `npm run lint` must pass) | ⚠️ advisory only (`AGENTS.md`, `.claude/rules/verification-gates.md`); the parked `stop-gate.mjs` would cover it for turn end, nothing blocks `git commit` itself |
-| Add a backend or call external services; the app makes no network requests | `scripts/check-readonly.mjs` and `architecture.test.ts` (run by `npm run check`) catch `fetch`, `innerHTML` and similar in the app. Not a hook: they report, they do not block the agent |
-| Write, rename or delete the user's files (app is read-only) | `scripts/check-readonly.mjs` (part of `npm run lint`). Reports at check time, does not block the tool call |
+| Write/edit `.env`, `.env.*` | ✅ `guard-writes.mjs` (PreToolUse on Edit/Write/MultiEdit, denies via JSON) |
+| Write/edit `.claude/settings.json` | ✅ `guard-writes.mjs`. To change settings, a human edits it or temporarily disables the hook |
+| Write/edit build output `dist/` | ✅ `guard-writes.mjs` (Edit/Write only; `npm run build` itself still writes `dist/`) |
+| Finish a turn while `npm run check` is red | ✅ `stop-gate.mjs` (Stop hook runs `npm run check`, exit 2 blocks the stop) |
+| Commit with failing types or lint (`npm run build` and `npm run lint` must pass) | ⚠️ advisory only (`AGENTS.md`, `.claude/rules/verification-gates.md`); `stop-gate.mjs` covers turn end, but nothing blocks `git commit` itself |
+| Add a backend or call external services; the app makes no network requests | 🧪 `src/architecture.test.ts` (part of `npm test`) bans `fetch(` in `src/`. It does **not** detect other network APIs (XMLHttpRequest, WebSocket, axios, `sendBeacon`), so this is partial. Blocks the turn end only via `stop-gate.mjs` |
+| Write, rename or delete the user's files (app is read-only) | 🧪 `scripts/check-readonly.mjs` (part of `npm run lint`) fails on `createWritable`, `removeEntry`, `.move(`, `readwrite`, `FileSystemWritableFileStream` in `src/`, and on file-system handle types outside `src/services/fs.ts`. It is a text match on `src/`: it does not block the tool call itself |
 | Edit, weaken or bypass `scripts/check-readonly.mjs` | ⚠️ advisory only (`.claude/rules/verification-gates.md`) |
 | Break tree accessibility (`role="tree"`, `treeitem`, `aria-*`, roving tabindex) | ⚠️ advisory only (`AGENTS.md`); component tests may catch some regressions, nothing is a dedicated gate |
 
@@ -51,12 +53,13 @@ Stop, say what blocked you, and wait for the human. Do not retry the same blocke
 | --- | --- |
 | A hook or `permissions.deny` rule blocks a call (e.g. `shell-guard.sh` exit 2) | ⚠️ advisory only: the harness shows the denial; "do not bypass" is a convention, not a check |
 | Repeated blocked attempts on the same action | ⚠️ advisory only: nothing counts attempts |
-| `npm run check` still red after a fix attempt, or the failure is unfixable (flaky or out of scope) | ⏸️ `stop-gate.mjs` re-checks and blocks once; on the retry it lets the turn end (`stop_hook_active`, loop protection). **Parked.** Reporting is advisory only |
+| `npm run check` still red after a fix attempt, or the failure is unfixable (flaky or out of scope) | ✅ `stop-gate.mjs` blocks the stop when check is red; on the retry it lets the turn end (`stop_hook_active`, loop protection). Reporting the failure is advisory only |
 | An `ask` rule is declined (`git push`, `npm install`) | ✅ prompt from `permissions.ask`; carrying on without it is advisory only |
 
-## Gaps to decide (flagged, not yet enforced)
+## Gaps to decide (advisory only, not enforced)
 
-1. **`guard-writes.mjs` and `stop-gate.mjs` are parked.** The `.env` write, `settings.json` write, `dist/` write and "red check" rows are not enforced until they move from `_disabled_hooks` to `hooks` in `settings.json`.
-2. `audit-log.mjs` (JSONL trail in `logs/agent-audit.jsonl`) is built but not wired, so no action is currently logged.
-3. `Bash(...)` deny rules match text patterns only; add more spellings or rely on `Read(...)` for tool-level blocks.
-4. No rule stops `git commit` with failing gates, installs of icon libraries, out-of-scope edits, or accessibility breakage (all advisory).
+1. Icon-library installs, out-of-scope edits, `git commit` with failing gates, editing `scripts/check-readonly.mjs`, and accessibility regressions have no hook or rule.
+2. `Bash(...)` deny rules match text patterns only (`sed`, `awk`, `cat < .env` are not covered).
+3. Network and write bans are 🧪 text checks: `fetch(` only, and a fixed list of File System Access write APIs. Other network APIs would pass.
+4. Nothing counts repeated blocked attempts; "stop and report" is a convention.
+5. `guard-writes.mjs` covers Edit/Write/MultiEdit only; shell redirects (`echo x > .env`) are not blocked by it.
