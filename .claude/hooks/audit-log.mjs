@@ -21,6 +21,12 @@ const SCRUBBERS = [
   [new RegExp(`([\\w-]*${KEY_WORDS}[\\w-]*["']?\\s*[=:]\\s*)("[^"]*"|'[^']*'|[^\\s"',;&]+)`, 'gi'), `$1${REDACTED}`],
   // --token abc, --password abc
   [new RegExp(`(--[\\w-]*${KEY_WORDS}[\\w-]*\\s+)("[^"]*"|'[^']*'|\\S+)`, 'gi'), `$1${REDACTED}`],
+  // Authorization: Basic dXNlcjpwYXNz
+  [/\bBasic\s+[A-Za-z0-9+/=]{8,}/g, `Basic ${REDACTED}`],
+  // https://user:pass@host (credentials embedded in a URL)
+  [/(\b[a-z][a-z0-9+.-]*:\/\/[^\s:@/]+:)[^\s@/]+@/gi, `$1${REDACTED}@`],
+  // curl -u user:pass, --user user:pass (needs a colon, so `git push -u origin` is untouched)
+  [/((?:^|\s)(?:-u|--user)(?:\s+|=))("[^":]*:[^"]*"|'[^':]*:[^']*'|[^\s":']+:\S*)/g, `$1${REDACTED}`],
   // Well-known token shapes: sk-..., ghp_..., github_pat_..., xoxb-...
   [/\b(?:sk|ghp|gho|ghs|github_pat|xox[bpas])[-_][A-Za-z0-9_-]{10,}/g, REDACTED],
 ]

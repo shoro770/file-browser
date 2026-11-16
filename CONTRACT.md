@@ -36,7 +36,7 @@ Audit: `audit-log.mjs` runs on `PostToolUse` (Edit/Write/MultiEdit/Bash), `PostT
 | `npm`/`pnpm`/`yarn … publish` | ✅ `shell-guard.sh` |
 | `git push --force`, `-f`, `--force-with-lease`, `+refspec` | ✅ `shell-guard.sh` (also hits the `git push` ask rule) |
 | Write/edit `.env`, `.env.*` | ✅ Primary: `permissions.deny` (`Read(.env)`, `Read(.env.*)` also refuse writes: "covered by a Read deny rule"). Defense-in-depth: `guard-writes.mjs` (PreToolUse on Edit/Write/MultiEdit, denies via JSON) |
-| Write/edit `.claude/settings.json` | ✅ `guard-writes.mjs`. To change settings, a human edits it or temporarily disables the hook |
+| Write/edit `.claude/settings.json`, `.claude/settings.local.json`, anything under `.claude/hooks/` | ✅ `guard-writes.mjs` (Edit/Write/MultiEdit). To change settings or hooks, a human edits them or temporarily disables the hook. Shell redirects (`echo x > .claude/hooks/…`) are not covered (see gap 5) |
 | Write/edit build output `dist/` | ✅ `guard-writes.mjs` (Edit/Write only; `npm run build` itself still writes `dist/`) |
 | Finish a turn while `npm run check` is red | ✅ `stop-gate.mjs` (Stop hook runs `npm run check`, exit 2 blocks the stop) |
 | Commit with failing types or lint (`npm run build` and `npm run lint` must pass) | ⚠️ advisory only (`AGENTS.md`, `.claude/rules/verification-gates.md`); `stop-gate.mjs` covers turn end, but nothing blocks `git commit` itself |

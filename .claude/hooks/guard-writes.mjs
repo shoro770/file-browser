@@ -10,6 +10,8 @@ import path from 'node:path'
 
 const BUILD_DIR = 'dist'
 const SETTINGS_FILE = path.join('.claude', 'settings.json')
+const SETTINGS_LOCAL_FILE = path.join('.claude', 'settings.local.json')
+const HOOKS_DIR = path.join('.claude', 'hooks')
 
 /** Read all of stdin as a string. */
 async function readStdin() {
@@ -36,8 +38,12 @@ function protectedReason(filePath, root) {
   // Paths outside the project root are not ours to judge below this point.
   if (rel.startsWith('..') || path.isAbsolute(rel)) return null
 
-  if (rel === SETTINGS_FILE) {
-    return '.claude/settings.json configures hooks, permissions and tooling for this project, so changes need the user\'s explicit review. Propose the change in chat and let the user apply it.'
+  if (rel === SETTINGS_FILE || rel === SETTINGS_LOCAL_FILE) {
+    return `${rel} configures hooks, permissions and tooling for this project, so changes need the user's explicit review. Propose the change in chat and let the user apply it.`
+  }
+
+  if (rel.startsWith(HOOKS_DIR + path.sep)) {
+    return `${HOOKS_DIR}/ holds the enforcement hooks and their fixtures, so editing them could switch the guards off. Propose the change in chat and let the user apply it.`
   }
 
   if (rel === BUILD_DIR || rel.startsWith(BUILD_DIR + path.sep)) {
