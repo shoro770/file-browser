@@ -61,6 +61,9 @@ describe('PreviewPane Word documents', () => {
 
   it('shows the newer selection when another file replaces a docx', async () => {
     const view = await show(await docxState('a.docx', paragraph('First', { style: 'Heading1' })))
+    // Let the conversion finish first: replacing the file mid-conversion leaves mammoth's stream
+    // ticking after teardown, which surfaced as an intermittent unhandled TypeError in full runs.
+    expect(await screen.findByRole('heading', { level: 1, name: 'First' }, SLOW)).toBeInTheDocument()
     await view.rerenderWith({
       status: 'ready',
       id: 'b.txt',
