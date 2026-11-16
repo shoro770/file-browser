@@ -31,11 +31,11 @@ Audit: `audit-log.mjs` (PostToolUse on Edit/Write/MultiEdit/Bash, and Stop) appe
 | Action | Enforcer |
 | --- | --- |
 | Read `.env`, `.env.*` (any depth) | ✅ `permissions.deny`: `Read(.env)`, `Read(.env.*)`, `Read(**/.env)`, `Read(**/.env.*)` |
-| Read `.env*` through the shell (`cat`/`head`/`tail`/`less`/`grep`) | ✅ `permissions.deny`: `Bash(cat .env*)`, `Bash(cat **/.env*)`, `Bash(head .env*)`, `Bash(tail .env*)`, `Bash(less .env*)`, `Bash(grep * .env*)`. Pattern-based: other spellings (`cat < .env`, `sed`, `awk`) are not covered |
+| Read `.env*` through the shell (`cat`/`head`/`tail`/`less`/`grep`) | ✅ `permissions.deny`: shell pattern rules `Bash(cat .env*)`, `Bash(cat **/.env*)`, `Bash(head .env*)`, `Bash(tail .env*)`, `Bash(less .env*)`, `Bash(grep * .env*)` cover those commands only; `Read(.env*)` is the tool-level denial. Pattern-based: other spellings (`cat < .env`, `sed`, `awk`) are not covered |
 | `rm -r` / `rm -rf` / `rm -R` / `--recursive` | ✅ `shell-guard.sh` (PreToolUse on Bash, exit 2) |
 | `npm`/`pnpm`/`yarn … publish` | ✅ `shell-guard.sh` |
 | `git push --force`, `-f`, `--force-with-lease`, `+refspec` | ✅ `shell-guard.sh` (also hits the `git push` ask rule) |
-| Write/edit `.env`, `.env.*` | ✅ `guard-writes.mjs` (PreToolUse on Edit/Write/MultiEdit, denies via JSON) |
+| Write/edit `.env`, `.env.*` | ✅ Primary: `permissions.deny` (`Read(.env)`, `Read(.env.*)` also refuse writes: "covered by a Read deny rule"). Defense-in-depth: `guard-writes.mjs` (PreToolUse on Edit/Write/MultiEdit, denies via JSON) |
 | Write/edit `.claude/settings.json` | ✅ `guard-writes.mjs`. To change settings, a human edits it or temporarily disables the hook |
 | Write/edit build output `dist/` | ✅ `guard-writes.mjs` (Edit/Write only; `npm run build` itself still writes `dist/`) |
 | Finish a turn while `npm run check` is red | ✅ `stop-gate.mjs` (Stop hook runs `npm run check`, exit 2 blocks the stop) |

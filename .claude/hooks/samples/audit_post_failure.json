@@ -1,0 +1,12 @@
+{
+  "session_id": "sample-session-0001",
+  "transcript_path": "/home/user/.claude/projects/file-browser/sample-session-0001.jsonl",
+  "cwd": "/home/user/file-browser",
+  "permission_mode": "default",
+  "hook_event_name": "PostToolUseFailure",
+  "tool_name": "Bash",
+  "tool_input": { "command": "npm test --token sample-not-a-real-secret" },
+  "tool_use_id": "toolu_sample_audit_failure",
+  "error": "Command exited with non-zero status code 1",
+  "is_interrupt": false
+}

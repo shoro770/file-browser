@@ -1,0 +1,11 @@
+{
+  "session_id": "sample-session-0001",
+  "transcript_path": "/home/user/.claude/projects/file-browser/sample-session-0001.jsonl",
+  "cwd": "/home/user/file-browser",
+  "permission_mode": "default",
+  "hook_event_name": "PermissionDenied",
+  "tool_name": "Bash",
+  "tool_input": { "command": "cat .env" },
+  "tool_use_id": "toolu_sample_audit_denied",
+  "reason": "Denied by permissions.deny rule"
+}
