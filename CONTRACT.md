@@ -6,7 +6,7 @@ Config lives in `.claude/settings.json`; hook scripts in `.claude/hooks/` (fixtu
 
 **Status key**: ✅ active now (enforced by a hook or permission rule) · 🧪 a check that reports when run, not a blocking hook · ⚠️ advisory only.
 
-Audit: `audit-log.mjs` runs on `PostToolUse` (Edit/Write/MultiEdit/Bash), `PostToolUseFailure` (all tools), `PermissionDenied` (all tools) and `Stop`. It appends one scrubbed line (`ts`, `session_id`, `event`, `tool`, `target`) per event to `logs/agent-audit.jsonl` (gitignored). Verified gap: a `cat .env` denied by `permissions.deny` produced **no** log line (tested twice), and calls blocked by a `PreToolUse` hook (`shell-guard.sh`, `guard-writes.mjs`) are not logged either. `PostToolUseFailure` and `PermissionDenied` are wired but have not been seen firing for these denials.
+Audit: `audit-log.mjs` runs on `PostToolUse` (Edit/Write/MultiEdit/Bash), `PostToolUseFailure` (all tools), `PermissionDenied` (all tools) and `Stop`. It appends one scrubbed line (`ts`, `session_id`, `event`, `tool`, `target`) per event to `logs/agent-audit.jsonl` (gitignored). Verified coverage (2026-11-16, fresh session): `PostToolUseFailure` **is** logged for a Bash command that ran and failed (exit 1). Verified gaps: a `cat .env` denied by `permissions.deny` produced **no** log line (no `PermissionDenied`, no `PostToolUseFailure`), so `permissions.deny` denials are **not** recorded in the audit log. Calls blocked by a `PreToolUse` hook (`shell-guard.sh`, `guard-writes.mjs`) are not logged either. Reloading hooks did not change this.
 
 ## 1. May do autonomously
 
